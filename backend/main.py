@@ -9,7 +9,7 @@ app = FastAPI()
 def startup():
     create_tables()
 
-@app.post("/register")
+@app.get("/register")
 def register_user(
     username: str,
     password: str,
