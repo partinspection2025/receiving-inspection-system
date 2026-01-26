@@ -86,3 +86,9 @@ def login_user(
         "section": user.section,
         "role": user.role
     }
+
+# --- Phase 5 test endpoint ---
+@app.get("/phase5")
+def phase5_ready():
+    return {"message": "Phase 5 ready"}
+
