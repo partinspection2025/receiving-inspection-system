@@ -1,15 +1,13 @@
-from database import get_db
+from sqlalchemy import Column, Integer, String
+from database import Base
 
-def create_tables():
-    db = get_db()
-    db.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            real_name TEXT,
-            section TEXT,
-            role TEXT
-        )
-    """)
-    db.commit()
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    password = Column(String)
+
+    name = Column(String)
+    section = Column(String)
+    role = Column(String)  # PIC / Checker / Approver
