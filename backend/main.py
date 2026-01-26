@@ -2,8 +2,11 @@ from fastapi import FastAPI
 from database import get_db
 from models import create_tables
 from auth import hash_password
+from database import Base, engine
+import models
 
 app = FastAPI()
+Base.metadata.create_all(bind=engine)
 
 @app.on_event("startup")
 def startup():
