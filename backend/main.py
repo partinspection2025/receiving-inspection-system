@@ -92,3 +92,31 @@ def login_user(
 def phase5_ready():
     return {"message": "Phase 5 ready"}
 
+# ==============================
+# Create new Part (Excel base)
+# ==============================
+@app.post("/parts/create")
+def create_part(
+    part_name: str,
+    part_number: str,
+    supplier: str,
+    drawing_number: str,
+    document_code: str,
+    db: Session = Depends(get_db)
+):
+    part = Part(
+        part_name=part_name,
+        part_number=part_number,
+        supplier=supplier,
+        drawing_number=drawing_number,
+        document_code=document_code
+    )
+    db.add(part)
+    db.commit()
+    db.refresh(part)
+
+    return {
+        "message": "Part created successfully",
+        "part_id": part.id
+    }
+
