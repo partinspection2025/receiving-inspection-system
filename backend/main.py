@@ -1,49 +1,41 @@
-# =========================================================
-# MAIN APPLICATION FILE
-# - Backend startup
-# - Database connection
-# - User register & login (GET + POST for now)
-# =========================================================
-
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
-from models import Part
-from fastapi import UploadFile, File
-from models import PartImage
+import os
+from uuid import uuid4
 
-from database import Base, engine, SessionLocal
-import models
-from auth import hash_password, verify_password, get_user_by_username
+from database import Base, engine, get_db
+from models import User, Part, PartImage
+from auth import authenticate_user
 
+# ==============================
+# App init
+# ==============================
 app = FastAPI()
 
-# =========================================================
-# CREATE DATABASE TABLES
-# =========================================================
 Base.metadata.create_all(bind=engine)
 
-# =========================================================
-# DATABASE SESSION HANDLER
-# =========================================================
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# =========================================================
-# ROOT CHECK
-# =========================================================
+
+# ==============================
+# Health check
+# ==============================
 @app.get("/")
 def root():
     return {"status": "Backend is running"}
 
-# =========================================================
-# USER REGISTER (ALLOW GET & POST)
-# =========================================================
-@app.api_route("/register", methods=["GET", "POST"])
-def register_user(
+
+@app.get("/phase5")
+def phase5_ready():
+    return {"message": "Phase 5 ready"}
+
+
+# ==============================
+# Register
+# ==============================
+@app.post("/register")
+def register(
     username: str,
     password: str,
     name: str,
@@ -51,37 +43,34 @@ def register_user(
     role: str,
     db: Session = Depends(get_db)
 ):
-    existing_user = get_user_by_username(db, username)
-    if existing_user:
+    if db.query(User).filter(User.username == username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
 
-    new_user = models.User(
+    user = User(
         username=username,
-        password=hash_password(password),
+        password=password,
         name=name,
         section=section,
         role=role
     )
-
-    db.add(new_user)
+    db.add(user)
     db.commit()
-    db.refresh(new_user)
 
     return {"message": "User registered successfully"}
 
-# =========================================================
-# USER LOGIN (ALLOW GET & POST)
-# =========================================================
-@app.api_route("/login", methods=["GET", "POST"])
-def login_user(
+
+# ==============================
+# Login
+# ==============================
+@app.post("/login")
+def login(
     username: str,
     password: str,
     db: Session = Depends(get_db)
 ):
-    user = get_user_by_username(db, username)
-
-    if not user or not verify_password(password, user.password):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+    user = authenticate_user(username, password, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     return {
         "message": "Login successful",
@@ -90,13 +79,9 @@ def login_user(
         "role": user.role
     }
 
-# --- Phase 5 test endpoint ---
-@app.get("/phase5")
-def phase5_ready():
-    return {"message": "Phase 5 ready"}
 
 # ==============================
-# Create new Part (Excel base)
+# Create Part (Excel base)
 # ==============================
 @app.post("/parts/create")
 def create_part(
@@ -118,10 +103,8 @@ def create_part(
     db.commit()
     db.refresh(part)
 
-    return {
-        "message": "Part created successfully",
-        "part_id": part.id
-    }
+    return {"message": "Part created successfully", "part_id": part.id}
+
 
 # ==============================
 # Upload Part Image
@@ -132,17 +115,15 @@ def upload_part_image(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    import os
-    from uuid import uuid4
-
-    upload_dir = "uploads"
-    os.makedirs(upload_dir, exist_ok=True)
+    part = db.query(Part).filter(Part.id == part_id).first()
+    if not part:
+        raise HTTPException(status_code=404, detail="Part not found")
 
     filename = f"{uuid4()}_{file.filename}"
-    file_path = os.path.join(upload_dir, filename)
+    file_path = os.path.join(UPLOAD_DIR, filename)
 
-    with open(file_path, "wb") as buffer:
-        buffer.write(file.file.read())
+    with open(file_path, "wb") as f:
+        f.write(file.file.read())
 
     image = PartImage(
         part_id=part_id,
