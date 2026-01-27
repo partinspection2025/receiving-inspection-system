@@ -122,3 +122,32 @@ def create_part(
         "part_id": part.id
     }
 
+# ==============================
+# Upload Part Image
+# ==============================
+@app.post("/parts/{part_id}/images")
+def upload_part_image(
+    part_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    import os
+    from uuid import uuid4
+
+    upload_dir = "uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+
+    filename = f"{uuid4()}_{file.filename}"
+    file_path = os.path.join(upload_dir, filename)
+
+    with open(file_path, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    image = PartImage(
+        part_id=part_id,
+        image_path=file_path
+    )
+    db.add(image)
+    db.commit()
+
+    return {"message": "Image uploaded successfully"}
