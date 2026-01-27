@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Receiving Inspection</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="sheet">
+
+  <!-- STATIC HEADER -->
+  <table class="header-table">
+    <tr><td>PART NAME</td><td>MIRROR INSIDE BACK</td></tr>
+    <tr><td>PART NUMBER</td><td>8123-0987</td></tr>
+    <tr><td>SUPPLIER</td><td>ABC SUPPLIER</td></tr>
+    <tr><td>DRAWING NO</td><td>DWG-001</td></tr>
+    <tr><td>DOCUMENT CODE</td><td>QMS-RCV-01</td></tr>
+  </table>
+
+  <div class="main-area">
+
+    <!-- IMAGE COLUMN -->
+    <div class="image-column">
+      <div class="image-cell">Part Image 1</div>
+      <div class="image-cell">Detail Image 2</div>
+      <div class="image-cell">Detail Image 3</div>
+    </div>
+
+    <!-- MEASUREMENT TABLE -->
+    <table class="measure-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Item</th>
+          <th>Std</th>
+          <th>-</th>
+          <th>+</th>
+          <th>11</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- Appearance -->
+        <tr>
+          <td>1</td>
+          <td>Appearance</td>
+          <td>OK</td>
+          <td></td>
+          <td></td>
+          <td class="cell-ok">
+            OK<br>OK<br>OK
+          </td>
+        </tr>
+
+        <!-- Dimension -->
+        <tr>
+          <td>2</td>
+          <td>Dimension</td>
+          <td>60</td>
+          <td>4</td>
+          <td>5</td>
+          <td class="cell-ng">
+            62<br>75<br>61
+          </td>
+        </tr>
+
+        <!-- Function -->
+        <tr>
+          <td>3</td>
+          <td>Function</td>
+          <td>OK</td>
+          <td></td>
+          <td></td>
+          <td>
+            OK<br>OK<br>OK
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+
+</body>
+</html>
