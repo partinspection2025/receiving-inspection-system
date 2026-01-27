@@ -25,3 +25,13 @@ class Part(Base):
     drawing_number = Column(String, nullable=False)
     document_code = Column(String, nullable=False)
 
+# ==============================
+# Part Images
+# ==============================
+class PartImage(Base):
+    __tablename__ = "part_images"
+
+    id = Column(Integer, primary_key=True, index=True)
+    part_id = Column(Integer, ForeignKey("parts.id"))
+    image_path = Column(String, nullable=False)
+
