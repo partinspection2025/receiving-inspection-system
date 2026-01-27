@@ -1,29 +1,33 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from database import Base
 
+# ==============================
+# Users
+# ==============================
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
-
     name = Column(String)
     section = Column(String)
-    role = Column(String)  # PIC / Checker / Approver
+    role = Column(String)
+
 
 # ==============================
-# Part model (Excel base file)
+# Parts (Excel base file)
 # ==============================
 class Part(Base):
     __tablename__ = "parts"
 
     id = Column(Integer, primary_key=True, index=True)
-    part_name = Column(String, nullable=False)
-    part_number = Column(String, nullable=False)
-    supplier = Column(String, nullable=False)
-    drawing_number = Column(String, nullable=False)
-    document_code = Column(String, nullable=False)
+    part_name = Column(String)
+    part_number = Column(String)
+    supplier = Column(String)
+    drawing_number = Column(String)
+    document_code = Column(String)
+
 
 # ==============================
 # Part Images
@@ -33,5 +37,4 @@ class PartImage(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     part_id = Column(Integer, ForeignKey("parts.id"))
-    image_path = Column(String, nullable=False)
-
+    image_path = Column(String)
