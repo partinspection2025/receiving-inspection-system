@@ -8,7 +8,8 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models import Part
-
+from fastapi import UploadFile, File
+from models import PartImage
 
 from database import Base, engine, SessionLocal
 import models
