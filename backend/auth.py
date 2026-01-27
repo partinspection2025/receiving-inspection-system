@@ -1,22 +1,10 @@
-# =========================================================
-# AUTH / PASSWORD HANDLING
-# Using SHA256 (stable on Railway)
-# =========================================================
-
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+from database import get_db
 from models import User
 
-pwd_context = CryptContext(
-    schemes=["sha256_crypt"],
-    deprecated="auto"
-)
-
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_user_by_username(db: Session, username: str):
-    return db.query(User).filter(User.username == username).first()
+def authenticate_user(username: str, password: str, db: Session):
+    user = db.query(User).filter(User.username == username).first()
+    if not user or user.password != password:
+        return None
+    return user
