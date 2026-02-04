@@ -7,9 +7,16 @@
 </head>
 <body>
 
+<!-- DAY SELECTOR (EXCEL-LIKE CONTROL) -->
+<div class="day-control">
+  Inspection Date:
+  <input type="date" id="inspectionDate">
+  <span id="selectedDayInfo"></span>
+</div>
+
 <div class="sheet">
 
-  <!-- STATIC HEADER -->
+  <!-- STATIC HEADER (ROWS 1–9) -->
   <table class="header-table">
     <tr><td>PART NAME</td><td>MIRROR INSIDE BACK</td></tr>
     <tr><td>PART NUMBER</td><td>8123-0987</td></tr>
@@ -22,58 +29,67 @@
 
     <!-- IMAGE COLUMN -->
     <div class="image-column">
-      <div class="image-cell">Part Image 1</div>
-      <div class="image-cell">Detail Image 2</div>
-      <div class="image-cell">Detail Image 3</div>
+      <div class="image-cell">Part Image</div>
     </div>
 
     <!-- MEASUREMENT TABLE -->
     <table class="measure-table">
       <thead>
         <tr>
-          <th>No</th>
-          <th>Item</th>
-          <th>Std</th>
-          <th>-</th>
-          <th>+</th>
-          <th>11</th>
+          <th class="freeze-col">No</th>
+          <th class="freeze-col">Item</th>
+          <th class="freeze-col">Std</th>
+          <th class="freeze-col">-</th>
+          <th class="freeze-col">+</th>
+
+          <!-- DAY COLUMNS -->
+          <th class="day-col" data-day="11">11</th>
         </tr>
       </thead>
 
       <tbody>
-        <!-- Appearance -->
+        <!-- APPEARANCE -->
         <tr>
-          <td>1</td>
-          <td>Appearance</td>
-          <td>OK</td>
-          <td></td>
-          <td></td>
-          <td class="cell-ok">
-            OK<br>OK<br>OK
+          <td class="freeze-col">1</td>
+          <td class="freeze-col">Appearance</td>
+          <td class="freeze-col">OK</td>
+          <td class="freeze-col"></td>
+          <td class="freeze-col"></td>
+
+          <td class="day-cell" data-day="11">
+            <select disabled><option>OK</option><option>NG</option></select><br>
+            <select disabled><option>OK</option><option>NG</option></select><br>
+            <select disabled><option>OK</option><option>NG</option></select>
           </td>
         </tr>
 
-        <!-- Dimension -->
+        <!-- DIMENSION -->
         <tr>
-          <td>2</td>
-          <td>Dimension</td>
-          <td>60</td>
-          <td>4</td>
-          <td>5</td>
-          <td class="cell-ng">
-            62<br>75<br>61
+          <td class="freeze-col">2</td>
+          <td class="freeze-col">Dimension</td>
+          <td class="freeze-col">60</td>
+          <td class="freeze-col">4</td>
+          <td class="freeze-col">5</td>
+
+          <td class="day-cell" data-day="11">
+            <input type="number" disabled><br>
+            <input type="number" disabled><br>
+            <input type="number" disabled>
           </td>
         </tr>
 
-        <!-- Function -->
+        <!-- FUNCTION -->
         <tr>
-          <td>3</td>
-          <td>Function</td>
-          <td>OK</td>
-          <td></td>
-          <td></td>
-          <td>
-            OK<br>OK<br>OK
+          <td class="freeze-col">3</td>
+          <td class="freeze-col">Function</td>
+          <td class="freeze-col">OK</td>
+          <td class="freeze-col"></td>
+          <td class="freeze-col"></td>
+
+          <td class="day-cell" data-day="11">
+            <select disabled><option>OK</option><option>NG</option></select><br>
+            <select disabled><option>OK</option><option>NG</option></select><br>
+            <select disabled><option>OK</option><option>NG</option></select>
           </td>
         </tr>
       </tbody>
@@ -83,5 +99,6 @@
 
 </div>
 
+<script src="script.js"></script>
 </body>
 </html>
