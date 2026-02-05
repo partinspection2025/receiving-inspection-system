@@ -1,23 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Receiving Inspection</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Receiving Inspection</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<!-- DAY SELECTOR (EXCEL-LIKE CONTROL) -->
-<div class="day-control">
+<div class="header">
   Inspection Date:
   <input type="date" id="inspectionDate">
-  <span id="selectedDayInfo"></span>
 </div>
 
 <div class="sheet">
 
-  <!-- STATIC HEADER (ROWS 1–9) -->
-  <table class="header-table">
+  <!-- STATIC HEADER -->
+  <table class="static-header">
     <tr><td>PART NAME</td><td>MIRROR INSIDE BACK</td></tr>
     <tr><td>PART NUMBER</td><td>8123-0987</td></tr>
     <tr><td>SUPPLIER</td><td>ABC SUPPLIER</td></tr>
@@ -27,72 +26,23 @@
 
   <div class="main-area">
 
-    <!-- IMAGE COLUMN -->
-    <div class="image-column">
-      <div class="image-cell">Part Image</div>
+    <!-- IMAGE AREA -->
+    <div class="image-area">
+      Part Image
     </div>
 
     <!-- MEASUREMENT TABLE -->
-    <table class="measure-table">
+    <table id="measureTable">
       <thead>
-        <tr>
-          <th class="freeze-col">No</th>
-          <th class="freeze-col">Item</th>
-          <th class="freeze-col">Std</th>
-          <th class="freeze-col">-</th>
-          <th class="freeze-col">+</th>
-
-          <!-- DAY COLUMNS -->
-          <th class="day-col" data-day="11">11</th>
+        <tr id="dayHeader">
+          <th>No</th>
+          <th>Item</th>
+          <th>Std</th>
+          <th>-</th>
+          <th>+</th>
         </tr>
       </thead>
-
-      <tbody>
-        <!-- APPEARANCE -->
-        <tr>
-          <td class="freeze-col">1</td>
-          <td class="freeze-col">Appearance</td>
-          <td class="freeze-col">OK</td>
-          <td class="freeze-col"></td>
-          <td class="freeze-col"></td>
-
-          <td class="day-cell" data-day="11">
-            <select disabled><option>OK</option><option>NG</option></select><br>
-            <select disabled><option>OK</option><option>NG</option></select><br>
-            <select disabled><option>OK</option><option>NG</option></select>
-          </td>
-        </tr>
-
-        <!-- DIMENSION -->
-        <tr>
-          <td class="freeze-col">2</td>
-          <td class="freeze-col">Dimension</td>
-          <td class="freeze-col">60</td>
-          <td class="freeze-col">4</td>
-          <td class="freeze-col">5</td>
-
-          <td class="day-cell" data-day="11">
-            <input type="number" disabled><br>
-            <input type="number" disabled><br>
-            <input type="number" disabled>
-          </td>
-        </tr>
-
-        <!-- FUNCTION -->
-        <tr>
-          <td class="freeze-col">3</td>
-          <td class="freeze-col">Function</td>
-          <td class="freeze-col">OK</td>
-          <td class="freeze-col"></td>
-          <td class="freeze-col"></td>
-
-          <td class="day-cell" data-day="11">
-            <select disabled><option>OK</option><option>NG</option></select><br>
-            <select disabled><option>OK</option><option>NG</option></select><br>
-            <select disabled><option>OK</option><option>NG</option></select>
-          </td>
-        </tr>
-      </tbody>
+      <tbody id="measureBody"></tbody>
     </table>
 
   </div>
