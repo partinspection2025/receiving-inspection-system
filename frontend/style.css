@@ -1,52 +1,97 @@
-body {
-  font-family: Arial;
-  background: #f5f5f5;
+body{
+ font-family:Arial;
+ background:#f5f5f5;
 }
 
-.header {
-  background: white;
-  padding: 10px;
-  border-bottom: 2px solid black;
-  position: sticky;
-  top: 0;
+.header{
+ background:white;
+ padding:10px;
+ border-bottom:2px solid black;
+ position:sticky;
+ top:0;
 }
 
-.sheet {
-  background: white;
-  padding: 10px;
-  width: max-content;
+.sheet{
+ background:white;
+ padding:10px;
+ width:max-content;
 }
 
-.static-header {
-  border-collapse: collapse;
-  margin-bottom: 10px;
+/* STATIC HEADER */
+.static-header{
+ border-collapse:collapse;
+ margin-bottom:10px;
 }
 
-.static-header td {
-  border: 1px solid black;
-  padding: 4px 8px;
-  font-weight: bold;
+.static-header td{
+ border:1px solid black;
+ padding:4px 8px;
+ font-weight:bold;
 }
 
-.main-area {
-  display: flex;
+/* MAIN AREA */
+.main-area{
+ display:flex;
 }
 
-.image-area {
-  width: 220px;
-  height: 220px;
-  border: 1px solid black;
-  margin-right: 10px;
+/* IMAGE AREA */
+.image-area{
+ width:220px;
+ height:220px;
+ border:1px solid black;
+ margin-right:10px;
 }
 
-#measureTable {
-  border-collapse: collapse;
+/* TABLE */
+#measureTable{
+ border-collapse:collapse;
+ table-layout:fixed;
 }
 
 #measureTable th,
-#measureTable td {
-  border: 1px solid black;
-  padding: 5px;
-  text-align: center;
-  min-width: 90px;
+#measureTable td{
+ border:1px solid black;
+ padding:4px;
+ text-align:center;
+}
+
+/* COLUMN WIDTH CONTROL */
+
+/* No column */
+#measureTable th:nth-child(1),
+#measureTable td:nth-child(1){
+ width:35px;
+}
+
+/* Item column */
+#measureTable th:nth-child(2),
+#measureTable td:nth-child(2){
+ width:260px;
+ text-align:left;
+ white-space:normal;
+ word-break:break-word;
+}
+
+/* STD column */
+#measureTable th:nth-child(3),
+#measureTable td:nth-child(3){
+ width:50px;
+}
+
+/* Tol - column */
+#measureTable th:nth-child(4),
+#measureTable td:nth-child(4){
+ width:50px;
+}
+
+/* Tol + column */
+#measureTable th:nth-child(5),
+#measureTable td:nth-child(5){
+ width:50px;
+}
+
+/* DAY COLUMNS */
+#measureTable th:nth-child(n+6),
+#measureTable td:nth-child(n+6){
+ width:80px;
 }
