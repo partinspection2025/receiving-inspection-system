@@ -1,25 +1,50 @@
-// DAY SELECTION LOGIC (EXCEL-LIKE)
+const dayHeader = document.getElementById("dayHeader");
+const measureBody = document.getElementById("measureBody");
 
-const dateInput = document.getElementById("inspectionDate");
-const dayInfo = document.getElementById("selectedDayInfo");
-const dayCells = document.querySelectorAll(".day-cell");
+/* =========================
+   GENERATE DAYS 1–31
+========================= */
 
-dateInput.addEventListener("change", () => {
-  const date = new Date(dateInput.value);
-  const day = date.getDate();
+for(let d=1; d<=31; d++){
+  const th = document.createElement("th");
+  th.textContent = d;
+  dayHeader.appendChild(th);
+}
 
-  dayInfo.textContent = ` → Editable Day: ${day}`;
+/* =========================
+   SAMPLE MEASUREMENT DATA
+   (Later comes from Excel upload)
+========================= */
 
-  dayCells.forEach(cell => {
-    const cellDay = cell.getAttribute("data-day");
-    const inputs = cell.querySelectorAll("input, select");
+const measurements = [
+  {no:1, item:"Appearance - Scratch", std:"OK"},
+  {no:2, item:"Appearance - Dent", std:"OK"},
+  {no:3, item:"Appearance - Color", std:"OK"},
+  {no:4, item:"Dimension - Length", std:"60", minus:"4", plus:"5"},
+  {no:5, item:"Dimension - Width", std:"60", minus:"4", plus:"5"},
+  {no:6, item:"Function - Fit", std:"OK"}
+];
 
-    if (parseInt(cellDay) === day) {
-      inputs.forEach(el => el.disabled = false);
-      cell.style.background = "#e8f4ff";
-    } else {
-      inputs.forEach(el => el.disabled = true);
-      cell.style.background = "";
-    }
-  });
+/* =========================
+   GENERATE ROWS
+========================= */
+
+measurements.forEach(m=>{
+  const tr = document.createElement("tr");
+
+  tr.innerHTML = `
+    <td>${m.no}</td>
+    <td>${m.item}</td>
+    <td>${m.std||""}</td>
+    <td>${m.minus||""}</td>
+    <td>${m.plus||""}</td>
+  `;
+
+  for(let d=1; d<=31; d++){
+    const td = document.createElement("td");
+    td.textContent = "";
+    tr.appendChild(td);
+  }
+
+  measureBody.appendChild(tr);
 });
