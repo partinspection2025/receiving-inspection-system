@@ -4,6 +4,7 @@ const inspectionDate=document.getElementById("inspectionDate");
 
 let activeDay=null;
 let daysWithData=[3,6,11];
+let stampedDays={};
 
 /* CREATE DAYS */
 for(let d=1;d<=31;d++){
@@ -34,7 +35,7 @@ function evaluateCell(td,m){
 
   inputs.forEach(i=>{
    const v=parseFloat(i.value);
-   if(!isNaN(v)&& (v<min||v>max)) red=true;
+   if(!isNaN(v)&&(v<min||v>max)) red=true;
   });
 
  }else{
@@ -46,7 +47,7 @@ function evaluateCell(td,m){
  td.style.backgroundColor=red?"#ffb3b3":"";
 }
 
-/* BUILD MEASUREMENT ROWS */
+/* BUILD MEASUREMENTS */
 measurements.forEach(m=>{
 
  const tr=document.createElement("tr");
@@ -99,10 +100,11 @@ measurements.forEach(m=>{
  measureBody.appendChild(tr);
 });
 
-/* ADD LOWER STRUCTURE ROWS */
-function addBottomRow(label){
+/* BOTTOM STRUCTURE */
+function addBottomRow(label,id){
 
  const tr=document.createElement("tr");
+ tr.dataset.role=id;
 
  const first=document.createElement("td");
  first.colSpan=5;
@@ -120,11 +122,40 @@ function addBottomRow(label){
  measureBody.appendChild(tr);
 }
 
-addBottomRow("Vendor Production Date");
-addBottomRow("Inspection Date");
-addBottomRow("PIC Stamp");
-addBottomRow("Checker Stamp");
-addBottomRow("Approver Stamp");
+addBottomRow("Vendor Production Date","vendor");
+addBottomRow("Inspection Date","inspection");
+addBottomRow("PIC Stamp","PIC");
+addBottomRow("Checker Stamp","Checker");
+addBottomRow("Approver Stamp","Approver");
+
+/* APPLY STAMP */
+function applyStamp(role){
+
+ if(!activeDay) return;
+
+ const row=document.querySelector(`tr[data-role="${role}"]`);
+ const cell=row.querySelector(`td[data-day="${activeDay}"]`);
+
+ if(!stampedDays[activeDay]) stampedDays[activeDay]={};
+ if(stampedDays[activeDay][role]) return;
+
+ const stamp=document.createElement("div");
+
+ stamp.style.border="2px solid red";
+ stamp.style.borderRadius="50%";
+ stamp.style.width="60px";
+ stamp.style.height="60px";
+ stamp.style.display="flex";
+ stamp.style.alignItems="center";
+ stamp.style.justifyContent="center";
+ stamp.style.color="red";
+ stamp.style.fontWeight="bold";
+ stamp.textContent=role;
+
+ cell.appendChild(stamp);
+
+ stampedDays[activeDay][role]=true;
+}
 
 /* DAY VISIBILITY */
 function updateVisibleDays(){
@@ -133,9 +164,7 @@ function updateVisibleDays(){
 
  document.querySelectorAll("[data-day]").forEach(el=>{
   const d=parseInt(el.dataset.day);
-
-  if(visible.includes(d)) el.style.display="";
-  else el.style.display="none";
+  el.style.display=visible.includes(d)?"":"none";
  });
 }
 
@@ -148,6 +177,7 @@ inspectionDate.addEventListener("change",()=>{
  updateVisibleDays();
 
  document.querySelectorAll("td[data-day]").forEach(td=>{
+
   const inputs=td.querySelectorAll("input,select");
 
   if(parseInt(td.dataset.day)===activeDay){
