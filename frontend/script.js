@@ -5,7 +5,7 @@ const measureBody=document.getElementById("measureBody");
 const inspectionDate=document.getElementById("inspectionDate");
 
 let activeDay=null;
-let daysWithData=[3,6,11];
+let daysWithData=[];
 let stampedDays={};
 
 /* CREATE DAYS */
