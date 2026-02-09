@@ -7,6 +7,7 @@ const inspectionDate=document.getElementById("inspectionDate");
 let activeDay=null;
 let daysWithData=[];
 let stampedDays={};
+
 async function loadHistory(){
 
  const res=await fetch(API_URL + "/receiving/history/1");
