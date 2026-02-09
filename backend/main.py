@@ -191,3 +191,31 @@ def get_receiving_history(part_id:int):
         "days":days,
         "stamps":stamps
     }
+@app.get("/receiving/history/{part_id}")
+def receiving_history(part_id:int):
+
+    from database import SessionLocal
+    db=SessionLocal()
+
+    rows=db.execute(
+        "SELECT inspection_day, stamps FROM receiving WHERE part_id=:pid",
+        {"pid":part_id}
+    ).fetchall()
+
+    days=[]
+    stamps={}
+
+    for r in rows:
+        day=r[0]
+        days.append(day)
+
+        try:
+            import json
+            stamps[day]=json.loads(r[1]) if r[1] else {}
+        except:
+            stamps[day]={}
+
+    return {
+        "days":days,
+        "stamps":stamps
+    }
