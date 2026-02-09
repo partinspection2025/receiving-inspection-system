@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 import os
 from uuid import uuid4
+from fastapi.middleware.cors import CORSMiddleware
 
 from database import Base, engine, get_db
 from models import User, Part, PartImage
@@ -15,6 +16,13 @@ import json
 # App init
 # ==============================
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Base.metadata.create_all(bind=engine)
 
