@@ -228,7 +228,8 @@ async function saveReceiving(){
   stamps:stampsData
  };
 
- const res=await fetch(`${API_URL}/receiving/save`,{
+ const res=await fetch(API_URL + "/receiving/save",{
+
   method:"POST",
   headers:{"Content-Type":"application/json"},
   body:JSON.stringify(payload)
