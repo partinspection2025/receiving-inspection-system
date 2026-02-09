@@ -6,6 +6,10 @@ from uuid import uuid4
 from database import Base, engine, get_db
 from models import User, Part, PartImage
 from auth import authenticate_user
+from models import ReceivingRecord
+from fastapi import Body
+import json
+
 
 # ==============================
 # App init
