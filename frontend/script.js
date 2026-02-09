@@ -191,3 +191,53 @@ inspectionDate.addEventListener("change",()=>{
 });
 
 updateVisibleDays();
+
+async function saveReceiving(){
+
+ if(!activeDay) return alert("Select inspection date first");
+
+ const measurementsData=[];
+ const stampsData=stampedDays[activeDay]||{};
+
+ document.querySelectorAll("#measureBody tr").forEach(tr=>{
+
+  if(tr.dataset.role) return;
+
+  const cells=tr.querySelectorAll(`td[data-day="${activeDay}"]`);
+
+  cells.forEach(td=>{
+
+   const inputs=td.querySelectorAll("input,select");
+   const values=[];
+
+   inputs.forEach(i=>{
+    values.push(i.value);
+   });
+
+   if(values.length>0){
+    measurementsData.push(values);
+   }
+  });
+ });
+
+ const payload={
+  part_id:1,
+  inspection_day:activeDay,
+  inspection_date:inspectionDate.value,
+  measurements:measurementsData,
+  stamps:stampsData
+ };
+
+ const res=await fetch(`${API_URL}/receiving/save`,{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify(payload)
+ });
+
+ const result=await res.json();
+
+ daysWithData=result.days;
+ updateVisibleDays();
+
+ alert("Receiving Saved");
+}
