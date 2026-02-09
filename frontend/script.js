@@ -1,4 +1,4 @@
-const API_URL = "https://receiving-inspection-system-production.up.railway.app/";
+const API_URL = "https://receiving-inspection-system-production.up.railway.app";
 
 const dayHeader=document.getElementById("dayHeader");
 const measureBody=document.getElementById("measureBody");
