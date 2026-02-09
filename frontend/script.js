@@ -1,3 +1,5 @@
+const API_URL = "https://https://receiving-inspection-system-production.up.railway.app/";
+
 const dayHeader=document.getElementById("dayHeader");
 const measureBody=document.getElementById("measureBody");
 const inspectionDate=document.getElementById("inspectionDate");
