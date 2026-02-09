@@ -8,21 +8,28 @@ let activeDay=null;
 let daysWithData=[];
 let stampedDays={};
 
+/* =========================
+   LOAD HISTORY
+=========================*/
 async function loadHistory(){
 
- const res=await fetch(API_URL + "/receiving/history/1");
- const data=await res.json();
+ try{
+  const res=await fetch(API_URL + "/receiving/history/1");
+  const data=await res.json();
 
- daysWithData=data.days||[];
- stampedDays=data.stamps||{};
+  daysWithData=data.days||[];
+  stampedDays=data.stamps||{};
 
- updateVisibleDays();
-loadHistory();
+  updateVisibleDays();
+ }catch(e){
+  console.log("history load fail",e);
+ }
 
 }
 
-
-/* CREATE DAYS */
+/* =========================
+   CREATE DAYS
+=========================*/
 for(let d=1;d<=31;d++){
  const th=document.createElement("th");
  th.textContent=d;
@@ -30,7 +37,9 @@ for(let d=1;d<=31;d++){
  dayHeader.appendChild(th);
 }
 
-/* MEASUREMENTS */
+/* =========================
+   MEASUREMENTS
+=========================*/
 const measurements=[
  {type:"appearance",no:1,item:"Appearance - Scratch"},
  {type:"appearance",no:2,item:"Appearance - Dent"},
@@ -46,6 +55,7 @@ function evaluateCell(td,m){
  let red=false;
 
  if(m.type==="dimension"){
+
   const min=m.std-m.minus;
   const max=m.std+m.plus;
 
@@ -55,15 +65,19 @@ function evaluateCell(td,m){
   });
 
  }else{
+
   inputs.forEach(i=>{
    if(i.value==="NG") red=true;
   });
+
  }
 
  td.style.backgroundColor=red?"#ffb3b3":"";
 }
 
-/* BUILD MEASUREMENTS */
+/* =========================
+   BUILD TABLE
+=========================*/
 measurements.forEach(m=>{
 
  const tr=document.createElement("tr");
@@ -83,6 +97,7 @@ measurements.forEach(m=>{
   const box=document.createElement("div");
 
   if(m.type==="dimension"){
+
    for(let i=0;i<3;i++){
     const inp=document.createElement("input");
     inp.type="number";
@@ -90,16 +105,21 @@ measurements.forEach(m=>{
     inp.addEventListener("input",()=>evaluateCell(td,m));
     box.appendChild(inp);
    }
+
   }else{
+
    for(let i=0;i<3;i++){
+
     const sel=document.createElement("select");
     sel.disabled=true;
 
     const ok=document.createElement("option");
-    ok.value="OK"; ok.text="OK";
+    ok.value="OK";
+    ok.text="OK";
 
     const ng=document.createElement("option");
-    ng.value="NG"; ng.text="NG";
+    ng.value="NG";
+    ng.text="NG";
 
     sel.appendChild(ok);
     sel.appendChild(ng);
@@ -107,6 +127,7 @@ measurements.forEach(m=>{
     sel.addEventListener("change",()=>evaluateCell(td,m));
     box.appendChild(sel);
    }
+
   }
 
   td.appendChild(box);
@@ -116,7 +137,9 @@ measurements.forEach(m=>{
  measureBody.appendChild(tr);
 });
 
-/* BOTTOM STRUCTURE */
+/* =========================
+   BOTTOM ROWS
+=========================*/
 function addBottomRow(label,id){
 
  const tr=document.createElement("tr");
@@ -144,7 +167,9 @@ addBottomRow("PIC Stamp","PIC");
 addBottomRow("Checker Stamp","Checker");
 addBottomRow("Approver Stamp","Approver");
 
-/* APPLY STAMP */
+/* =========================
+   STAMP
+=========================*/
 function applyStamp(role){
 
  if(!activeDay) return;
@@ -173,7 +198,9 @@ function applyStamp(role){
  stampedDays[activeDay][role]=true;
 }
 
-/* DAY VISIBILITY */
+/* =========================
+   DAY VISIBILITY
+=========================*/
 function updateVisibleDays(){
 
  const visible=[...new Set([...daysWithData,activeDay])];
@@ -184,7 +211,9 @@ function updateVisibleDays(){
  });
 }
 
-/* DATE SELECT */
+/* =========================
+   DATE SELECT
+=========================*/
 inspectionDate.addEventListener("change",()=>{
 
  const date=new Date(inspectionDate.value);
@@ -201,11 +230,13 @@ inspectionDate.addEventListener("change",()=>{
   }else{
    inputs.forEach(i=>i.disabled=true);
   }
+
  });
 });
 
-updateVisibleDays();
-
+/* =========================
+   SAVE RECEIVING
+=========================*/
 async function saveReceiving(){
 
  if(!activeDay) return alert("Select inspection date first");
@@ -231,6 +262,7 @@ async function saveReceiving(){
    if(values.length>0){
     measurementsData.push(values);
    }
+
   });
  });
 
@@ -243,7 +275,6 @@ async function saveReceiving(){
  };
 
  const res=await fetch(API_URL + "/receiving/save",{
-
   method:"POST",
   headers:{"Content-Type":"application/json"},
   body:JSON.stringify(payload)
@@ -251,8 +282,14 @@ async function saveReceiving(){
 
  const result=await res.json();
 
- daysWithData=result.days;
+ daysWithData=result.days||[];
  updateVisibleDays();
 
  alert("Receiving Saved");
 }
+
+/* =========================
+   INIT
+=========================*/
+updateVisibleDays();
+loadHistory();
