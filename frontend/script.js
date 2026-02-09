@@ -7,6 +7,17 @@ const inspectionDate=document.getElementById("inspectionDate");
 let activeDay=null;
 let daysWithData=[];
 let stampedDays={};
+async function loadHistory(){
+
+ const res=await fetch(API_URL + "/receiving/history/1");
+ const data=await res.json();
+
+ daysWithData=data.days||[];
+ stampedDays=data.stamps||{};
+
+ updateVisibleDays();
+}
+
 
 /* CREATE DAYS */
 for(let d=1;d<=31;d++){
