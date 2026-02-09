@@ -169,3 +169,25 @@ def save_receiving(data: dict = Body(...), db: Session = Depends(get_db)):
         "message": "Receiving saved",
         "days": [d[0] for d in days]
     }
+@app.get("/receiving/history/{part_id}")
+def get_receiving_history(part_id:int):
+
+    from database import SessionLocal
+    db=SessionLocal()
+
+    rows=db.execute(
+        "SELECT inspection_day, stamps FROM receiving WHERE part_id=:pid",
+        {"pid":part_id}
+    ).fetchall()
+
+    days=[]
+    stamps={}
+
+    for r in rows:
+        days.append(r[0])
+        stamps[r[0]]=r[1] if r[1] else {}
+
+    return {
+        "days":days,
+        "stamps":stamps
+    }
