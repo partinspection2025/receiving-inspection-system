@@ -137,3 +137,27 @@ def upload_part_image(
     db.commit()
 
     return {"message": "Image uploaded successfully"}
+
+@app.post("/receiving/save")
+def save_receiving(data: dict = Body(...), db: Session = Depends(get_db)):
+
+    record = ReceivingRecord(
+        part_id=data.get("part_id"),
+        inspection_day=data.get("inspection_day"),
+        inspection_date=data.get("inspection_date"),
+        measurements=json.dumps(data.get("measurements")),
+        stamps=json.dumps(data.get("stamps"))
+    )
+
+    db.add(record)
+    db.commit()
+
+    # return updated history
+    days = db.query(ReceivingRecord.inspection_day)\
+             .filter(ReceivingRecord.part_id == data.get("part_id"))\
+             .all()
+
+    return {
+        "message": "Receiving saved",
+        "days": [d[0] for d in days]
+    }
