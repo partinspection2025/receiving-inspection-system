@@ -38,3 +38,13 @@ class PartImage(Base):
     id = Column(Integer, primary_key=True, index=True)
     part_id = Column(Integer, ForeignKey("parts.id"))
     image_path = Column(String)
+
+class ReceivingRecord(Base):
+    __tablename__ = "receiving_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    part_id = Column(Integer)
+    inspection_day = Column(Integer)
+    inspection_date = Column(String)
+    measurements = Column(String)  # JSON string
+    stamps = Column(String)        # JSON string
