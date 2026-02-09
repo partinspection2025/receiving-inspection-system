@@ -16,6 +16,8 @@ async function loadHistory(){
  stampedDays=data.stamps||{};
 
  updateVisibleDays();
+loadHistory();
+
 }
 
 
