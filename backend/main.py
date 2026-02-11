@@ -1,21 +1,21 @@
-from fastapi import FastAPI, Depends, UploadFile, File, HTTPException
-from sqlalchemy.orm import Session
-import os
-from uuid import uuid4
+from fastapi import FastAPI, Depends, UploadFile, File, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+import os
+import json
+from uuid import uuid4
 
 from database import Base, engine, get_db
-from models import User, Part, PartImage
+from models import User, Part, PartImage, ReceivingRecord
 from auth import authenticate_user
-from models import ReceivingRecord
-from fastapi import Body
-import json
 
 
 # ==============================
 # App init
 # ==============================
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -93,7 +93,7 @@ def login(
 
 
 # ==============================
-# Create Part (Excel base)
+# Create Part
 # ==============================
 @app.post("/parts/create")
 def create_part(
@@ -146,6 +146,10 @@ def upload_part_image(
 
     return {"message": "Image uploaded successfully"}
 
+
+# ==============================
+# Save Receiving
+# ==============================
 @app.post("/receiving/save")
 def save_receiving(data: dict = Body(...), db: Session = Depends(get_db)):
 
@@ -160,7 +164,6 @@ def save_receiving(data: dict = Body(...), db: Session = Depends(get_db)):
     db.add(record)
     db.commit()
 
-    # return updated history
     days = db.query(ReceivingRecord.inspection_day)\
              .filter(ReceivingRecord.part_id == data.get("part_id"))\
              .all()
@@ -169,37 +172,17 @@ def save_receiving(data: dict = Body(...), db: Session = Depends(get_db)):
         "message": "Receiving saved",
         "days": [d[0] for d in days]
     }
+
+
+# ==============================
+# Receiving History
+# ==============================
 @app.get("/receiving/history/{part_id}")
-def get_receiving_history(part_id:int):
+def receiving_history(part_id:int, db: Session = Depends(get_db)):
 
-    from database import SessionLocal
-    db=SessionLocal()
-
-    rows=db.execute(
-        "SELECT inspection_day, stamps FROM receiving WHERE part_id=:pid",
-        {"pid":part_id}
-    ).fetchall()
-
-    days=[]
-    stamps={}
-
-    for r in rows:
-        days.append(r[0])
-        stamps[r[0]]=r[1] if r[1] else {}
-
-    return {
-        "days":days,
-        "stamps":stamps
-    }
-@app.get("/receiving/history/{part_id}")
-def receiving_history(part_id:int):
-
-    from database import SessionLocal
-    db=SessionLocal()
-
-    rows=db.execute(
-        "SELECT inspection_day, stamps FROM receiving WHERE part_id=:pid",
-        {"pid":part_id}
+    rows = db.execute(
+        text("SELECT inspection_day, stamps FROM receivingrecord WHERE part_id=:pid"),
+        {"pid": part_id}
     ).fetchall()
 
     days=[]
@@ -210,7 +193,6 @@ def receiving_history(part_id:int):
         days.append(day)
 
         try:
-            import json
             stamps[day]=json.loads(r[1]) if r[1] else {}
         except:
             stamps[day]={}
