@@ -7,29 +7,9 @@ const inspectionDate=document.getElementById("inspectionDate");
 let activeDay=null;
 let daysWithData=[];
 let stampedDays={};
+let measurementsHistory={};
 
-/* =========================
-   LOAD HISTORY
-=========================*/
-async function loadHistory(){
-
- try{
-  const res=await fetch(API_URL + "/receiving/history/1");
-  const data=await res.json();
-
-  daysWithData=data.days||[];
-  stampedDays=data.stamps||{};
-
-  updateVisibleDays();
- }catch(e){
-  console.log("history load fail",e);
- }
-
-}
-
-/* =========================
-   CREATE DAYS
-=========================*/
+/* CREATE DAYS */
 for(let d=1;d<=31;d++){
  const th=document.createElement("th");
  th.textContent=d;
@@ -37,9 +17,7 @@ for(let d=1;d<=31;d++){
  dayHeader.appendChild(th);
 }
 
-/* =========================
-   MEASUREMENTS
-=========================*/
+/* MEASUREMENTS */
 const measurements=[
  {type:"appearance",no:1,item:"Appearance - Scratch"},
  {type:"appearance",no:2,item:"Appearance - Dent"},
@@ -50,34 +28,26 @@ const measurements=[
 ];
 
 function evaluateCell(td,m){
-
  const inputs=td.querySelectorAll("input,select");
  let red=false;
 
  if(m.type==="dimension"){
-
   const min=m.std-m.minus;
   const max=m.std+m.plus;
-
   inputs.forEach(i=>{
    const v=parseFloat(i.value);
    if(!isNaN(v)&&(v<min||v>max)) red=true;
   });
-
  }else{
-
   inputs.forEach(i=>{
    if(i.value==="NG") red=true;
   });
-
  }
 
  td.style.backgroundColor=red?"#ffb3b3":"";
 }
 
-/* =========================
-   BUILD TABLE
-=========================*/
+/* BUILD TABLE */
 measurements.forEach(m=>{
 
  const tr=document.createElement("tr");
@@ -97,7 +67,6 @@ measurements.forEach(m=>{
   const box=document.createElement("div");
 
   if(m.type==="dimension"){
-
    for(let i=0;i<3;i++){
     const inp=document.createElement("input");
     inp.type="number";
@@ -105,21 +74,16 @@ measurements.forEach(m=>{
     inp.addEventListener("input",()=>evaluateCell(td,m));
     box.appendChild(inp);
    }
-
   }else{
-
    for(let i=0;i<3;i++){
-
     const sel=document.createElement("select");
     sel.disabled=true;
 
     const ok=document.createElement("option");
-    ok.value="OK";
-    ok.text="OK";
+    ok.value="OK"; ok.text="OK";
 
     const ng=document.createElement("option");
-    ng.value="NG";
-    ng.text="NG";
+    ng.value="NG"; ng.text="NG";
 
     sel.appendChild(ok);
     sel.appendChild(ng);
@@ -127,7 +91,6 @@ measurements.forEach(m=>{
     sel.addEventListener("change",()=>evaluateCell(td,m));
     box.appendChild(sel);
    }
-
   }
 
   td.appendChild(box);
@@ -137,39 +100,7 @@ measurements.forEach(m=>{
  measureBody.appendChild(tr);
 });
 
-/* =========================
-   BOTTOM ROWS
-=========================*/
-function addBottomRow(label,id){
-
- const tr=document.createElement("tr");
- tr.dataset.role=id;
-
- const first=document.createElement("td");
- first.colSpan=5;
- first.textContent=label;
- first.style.fontWeight="bold";
-
- tr.appendChild(first);
-
- for(let d=1;d<=31;d++){
-  const td=document.createElement("td");
-  td.dataset.day=d;
-  tr.appendChild(td);
- }
-
- measureBody.appendChild(tr);
-}
-
-addBottomRow("Vendor Production Date","vendor");
-addBottomRow("Inspection Date","inspection");
-addBottomRow("PIC Stamp","PIC");
-addBottomRow("Checker Stamp","Checker");
-addBottomRow("Approver Stamp","Approver");
-
-/* =========================
-   STAMP
-=========================*/
+/* STAMP */
 function applyStamp(role){
 
  if(!activeDay) return;
@@ -198,22 +129,68 @@ function applyStamp(role){
  stampedDays[activeDay][role]=true;
 }
 
-/* =========================
-   DAY VISIBILITY
-=========================*/
+/* HISTORY LOAD */
+async function loadHistory(){
+
+ try{
+
+  const res=await fetch(API_URL + "/receiving/history/1");
+  const data=await res.json();
+
+  daysWithData=data.days||[];
+  stampedDays=data.stamps||{};
+  measurementsHistory=data.measurements||{};
+
+  rebuildHistory();
+
+  updateVisibleDays();
+
+ }catch(e){
+  console.log("history load fail",e);
+ }
+}
+
+/* REBUILD TABLE FROM HISTORY */
+function rebuildHistory(){
+
+ Object.keys(measurementsHistory).forEach(day=>{
+
+  const rows=document.querySelectorAll("#measureBody tr");
+
+  rows.forEach((tr,index)=>{
+
+   if(tr.dataset.role) return;
+
+   const td=tr.querySelector(`td[data-day="${day}"]`);
+   if(!td) return;
+
+   const inputs=td.querySelectorAll("input,select");
+
+   const values=measurementsHistory[day][index]||[];
+
+   inputs.forEach((inp,i)=>{
+    if(values[i]!==undefined){
+     inp.value=values[i];
+     inp.disabled=true;
+    }
+   });
+
+   const m=measurements[index];
+   evaluateCell(td,m);
+  });
+ });
+}
+
+/* DAY VISIBILITY */
 function updateVisibleDays(){
-
  const visible=[...new Set([...daysWithData,activeDay])];
-
  document.querySelectorAll("[data-day]").forEach(el=>{
   const d=parseInt(el.dataset.day);
   el.style.display=visible.includes(d)?"":"none";
  });
 }
 
-/* =========================
-   DATE SELECT
-=========================*/
+/* DATE SELECT */
 inspectionDate.addEventListener("change",()=>{
 
  const date=new Date(inspectionDate.value);
@@ -230,13 +207,10 @@ inspectionDate.addEventListener("change",()=>{
   }else{
    inputs.forEach(i=>i.disabled=true);
   }
-
  });
 });
 
-/* =========================
-   SAVE RECEIVING
-=========================*/
+/* SAVE */
 async function saveReceiving(){
 
  if(!activeDay) return alert("Select inspection date first");
@@ -248,22 +222,13 @@ async function saveReceiving(){
 
   if(tr.dataset.role) return;
 
-  const cells=tr.querySelectorAll(`td[data-day="${activeDay}"]`);
+  const td=tr.querySelector(`td[data-day="${activeDay}"]`);
+  const inputs=td.querySelectorAll("input,select");
 
-  cells.forEach(td=>{
+  const values=[];
+  inputs.forEach(i=>values.push(i.value));
 
-   const inputs=td.querySelectorAll("input,select");
-   const values=[];
-
-   inputs.forEach(i=>{
-    values.push(i.value);
-   });
-
-   if(values.length>0){
-    measurementsData.push(values);
-   }
-
-  });
+  measurementsData.push(values);
  });
 
  const payload={
@@ -282,14 +247,12 @@ async function saveReceiving(){
 
  const result=await res.json();
 
- daysWithData=result.days||[];
+ daysWithData=result.days;
  updateVisibleDays();
 
  alert("Receiving Saved");
 }
 
-/* =========================
-   INIT
-=========================*/
-updateVisibleDays();
+/* INIT */
 loadHistory();
+updateVisibleDays();
