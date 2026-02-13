@@ -166,6 +166,20 @@ function addBottomRow(label,role){
  measureBody.appendChild(tr);
 }
 
+/* ================================
+   BLOCK 10 — DAY VISIBILITY
+================================ */
+
+function updateVisibleDays(){
+
+ const visible=[...new Set([...daysWithData,activeDay])];
+
+ document.querySelectorAll("[data-day]").forEach(el=>{
+  const d=parseInt(el.dataset.day);
+  el.style.display=visible.includes(d)?"":"none";
+ });
+
+}
 
 /* ================================
    BLOCK 11 — DATE SELECTION
@@ -216,9 +230,11 @@ async function loadExcel(){
  for(let i=11;i<rows.length;i++){
 
   const row=rows[i];
-  if(!row || !row[1]) continue;
+if(!row) continue;
 
-  const name=row[1].toString().trim();
+const name = (row[0] || row[1] || "").toString().trim();
+if(!name) continue;
+
 
   if(name==="Appearance"||name==="Dimension"||name==="Function"){
    measurements.push({type:"category",item:name});
@@ -244,19 +260,20 @@ async function loadExcel(){
 
 
 /* =====================================================
-   BLOCK 17 — EXCEL STATIC HEADER APPLY
+   BLOCK 17 — EXCEL STATIC HEADER APPLY (REAL TABLE)
 ===================================================== */
 
 function applyExcelHeader(rows){
 
  try{
 
-  document.querySelector("#partName").innerText = rows[8][1] || "";
-  document.querySelector("#type").innerText = rows[7][1] || "";
-  document.querySelector("#vendor").innerText = rows[6][1] || "";
+  document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText = rows[8][1] || "";
+  document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText = rows[7][1] || "";
+  document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText = rows[6][1] || "";
 
  }catch(e){
   console.log("Header apply failed",e);
  }
 
 }
+
