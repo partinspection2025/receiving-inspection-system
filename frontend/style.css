@@ -95,3 +95,9 @@ body{
 #measureTable td:nth-child(n+6){
  width:80px;
 }
+
+.std-col{
+ width:260px;
+ white-space:normal;
+ word-wrap:break-word;
+}
