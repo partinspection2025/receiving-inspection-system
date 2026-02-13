@@ -385,3 +385,51 @@ async function saveReceiving(){
 
 loadHistory();
 updateVisibleDays();
+
+/* =====================================================
+   BLOCK 15 — EXCEL IMPORT ENGINE
+===================================================== */
+
+async function loadExcel(){
+
+ const file=document.getElementById("excelUpload").files[0];
+ if(!file) return alert("Select Excel file");
+
+ const data=await file.arrayBuffer();
+
+ const workbook=XLSX.read(data);
+ const sheet=workbook.Sheets[workbook.SheetNames[0]];
+
+ const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
+
+ applyExcelData(rows);
+}
+
+
+/* =====================================================
+   BLOCK 16 — AUTO APPLY EXCEL DATA
+===================================================== */
+
+function applyExcelData(rows){
+
+ rows.forEach((row,index)=>{
+
+  const tr=document.querySelectorAll("#measureBody tr")[index];
+  if(!tr || tr.dataset.role) return;
+
+  const td=tr.querySelector(`td[data-day="${activeDay}"]`);
+  if(!td) return;
+
+  const inputs=td.querySelectorAll("input,select");
+
+  inputs.forEach((inp,i)=>{
+   if(row[i]!==undefined){
+    inp.value=row[i];
+   }
+  });
+
+  evaluateCell(td,measurements[index]);
+ });
+}
+
+
