@@ -30,15 +30,79 @@ for(let d=1;d<=31;d++){
 /* ================================
    BLOCK 03 — MEASUREMENT MASTER
 ================================ */
+/* =====================================================
+   BLOCK 03-B — DYNAMIC MEASUREMENT TABLE BUILDER
+===================================================== */
 
-const measurements=[
- {type:"appearance",no:1,item:"Appearance - Scratch"},
- {type:"appearance",no:2,item:"Appearance - Dent"},
- {type:"appearance",no:3,item:"Appearance - Color"},
- {type:"dimension",no:4,item:"Dimension - Length",std:60,minus:4,plus:5},
- {type:"dimension",no:5,item:"Dimension - Width",std:60,minus:4,plus:5},
- {type:"function",no:6,item:"Function - Fit"}
-];
+let dynamicMeasurements=[];
+
+function buildMeasurementTableFromExcel(rows){
+
+ measureBody.innerHTML="";
+ dynamicMeasurements=[];
+
+ rows.forEach((r,index)=>{
+
+  const tr=document.createElement("tr");
+
+  tr.innerHTML=`
+  <td>${index+1}</td>
+  <td>${r.item}</td>
+  <td class="std-col">${r.std||""}</td>
+  <td>${r.minus||""}</td>
+  <td>${r.plus||""}</td>`;
+
+  dynamicMeasurements.push(r);
+
+  for(let d=1;d<=31;d++){
+
+   const td=document.createElement("td");
+   td.dataset.day=d;
+
+   const box=document.createElement("div");
+
+   if(r.type==="dimension"){
+    for(let i=0;i<3;i++){
+     const inp=document.createElement("input");
+     inp.type="number";
+     inp.disabled=true;
+     inp.addEventListener("input",()=>evaluateCell(td,r));
+     box.appendChild(inp);
+    }
+   }else{
+    for(let i=0;i<3;i++){
+     const sel=document.createElement("select");
+     sel.disabled=true;
+
+     const ok=document.createElement("option");
+     ok.value="OK"; ok.text="OK";
+
+     const ng=document.createElement("option");
+     ng.value="NG"; ng.text="NG";
+
+     sel.appendChild(ok);
+     sel.appendChild(ng);
+
+     sel.addEventListener("change",()=>evaluateCell(td,r));
+     box.appendChild(sel);
+    }
+   }
+
+   td.appendChild(box);
+   tr.appendChild(td);
+  }
+
+  measureBody.appendChild(tr);
+ });
+
+ addBottomRow("Vendor Production Date","vendor");
+ addBottomRow("Inspection Date","inspection");
+ addBottomRow("PIC Stamp","PIC");
+ addBottomRow("Checker Stamp","Checker");
+ addBottomRow("Approver Stamp","Approver");
+
+}
+
 
 
 /* =====================================================
@@ -70,57 +134,7 @@ function evaluateCell(td,m){
    BLOCK 05 — BUILD MEASUREMENT TABLE
 ===================================================== */
 
-measurements.forEach(m=>{
 
- const tr=document.createElement("tr");
-
- tr.innerHTML=`
- <td>${m.no}</td>
- <td>${m.item}</td>
- <td>${m.std||""}</td>
- <td>${m.minus||""}</td>
- <td>${m.plus||""}</td>`;
-
- for(let d=1;d<=31;d++){
-
-  const td=document.createElement("td");
-  td.dataset.day=d;
-
-  const box=document.createElement("div");
-
-  if(m.type==="dimension"){
-   for(let i=0;i<3;i++){
-    const inp=document.createElement("input");
-    inp.type="number";
-    inp.disabled=true;
-    inp.addEventListener("input",()=>evaluateCell(td,m));
-    box.appendChild(inp);
-   }
-  }else{
-   for(let i=0;i<3;i++){
-    const sel=document.createElement("select");
-    sel.disabled=true;
-
-    const ok=document.createElement("option");
-    ok.value="OK"; ok.text="OK";
-
-    const ng=document.createElement("option");
-    ng.value="NG"; ng.text="NG";
-
-    sel.appendChild(ok);
-    sel.appendChild(ng);
-
-    sel.addEventListener("change",()=>evaluateCell(td,m));
-    box.appendChild(sel);
-   }
-  }
-
-  td.appendChild(box);
-  tr.appendChild(td);
- }
-
- measureBody.appendChild(tr);
-});
 
 
 /* =====================================================
@@ -403,6 +417,32 @@ async function loadExcel(){
  const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
 
  applyExcelData(rows);
+   const measurements=[];
+
+for(let i=11;i<json.length;i++){
+
+ const row=json[i];
+
+ if(!row[1]) break;
+
+ const item=row[1].toString();
+
+ let type="appearance";
+ if(item.toLowerCase().includes("dimension")) type="dimension";
+ if(item.toLowerCase().includes("function")) type="function";
+
+ measurements.push({
+  type:type,
+  item:item,
+  std:row[2],
+  minus:row[3],
+  plus:row[4]
+ });
+
+}
+
+buildMeasurementTableFromExcel(measurements);
+
 }
 
 
