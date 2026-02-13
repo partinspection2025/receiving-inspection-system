@@ -9,7 +9,6 @@ let daysWithData=[];
 let stampedDays={};
 let measurementsHistory={};
 
-/* CREATE DAYS */
 for(let d=1;d<=31;d++){
  const th=document.createElement("th");
  th.textContent=d;
@@ -17,7 +16,6 @@ for(let d=1;d<=31;d++){
  dayHeader.appendChild(th);
 }
 
-/* MEASUREMENTS */
 const measurements=[
  {type:"appearance",no:1,item:"Appearance - Scratch"},
  {type:"appearance",no:2,item:"Appearance - Dent"},
@@ -47,7 +45,6 @@ function evaluateCell(td,m){
  td.style.backgroundColor=red?"#ffb3b3":"";
 }
 
-/* BUILD TABLE */
 measurements.forEach(m=>{
 
  const tr=document.createElement("tr");
@@ -100,7 +97,33 @@ measurements.forEach(m=>{
  measureBody.appendChild(tr);
 });
 
-/* STAMP */
+function addBottomRow(label,role){
+
+ const tr=document.createElement("tr");
+ tr.dataset.role=role;
+
+ const first=document.createElement("td");
+ first.colSpan=5;
+ first.textContent=label;
+ first.style.fontWeight="bold";
+
+ tr.appendChild(first);
+
+ for(let d=1;d<=31;d++){
+  const td=document.createElement("td");
+  td.dataset.day=d;
+  tr.appendChild(td);
+ }
+
+ measureBody.appendChild(tr);
+}
+
+addBottomRow("Vendor Production Date","vendor");
+addBottomRow("Inspection Date","inspection");
+addBottomRow("PIC Stamp","PIC");
+addBottomRow("Checker Stamp","Checker");
+addBottomRow("Approver Stamp","Approver");
+
 function applyStamp(role){
 
  if(!activeDay) return;
@@ -129,7 +152,6 @@ function applyStamp(role){
  stampedDays[activeDay][role]=true;
 }
 
-/* HISTORY LOAD */
 async function loadHistory(){
 
  try{
@@ -142,7 +164,7 @@ async function loadHistory(){
   measurementsHistory=data.measurements||{};
 
   rebuildHistory();
-
+  rebuildStamps();
   updateVisibleDays();
 
  }catch(e){
@@ -150,7 +172,6 @@ async function loadHistory(){
  }
 }
 
-/* REBUILD TABLE FROM HISTORY */
 function rebuildHistory(){
 
  Object.keys(measurementsHistory).forEach(day=>{
@@ -181,16 +202,48 @@ function rebuildHistory(){
  });
 }
 
-/* DAY VISIBILITY */
+function rebuildStamps(){
+
+ Object.keys(stampedDays).forEach(day=>{
+
+  const roles=stampedDays[day];
+
+  Object.keys(roles).forEach(role=>{
+
+   const row=document.querySelector(`tr[data-role="${role}"]`);
+   if(!row) return;
+
+   const cell=row.querySelector(`td[data-day="${day}"]`);
+   if(!cell) return;
+
+   const stamp=document.createElement("div");
+
+   stamp.style.border="2px solid red";
+   stamp.style.borderRadius="50%";
+   stamp.style.width="60px";
+   stamp.style.height="60px";
+   stamp.style.display="flex";
+   stamp.style.alignItems="center";
+   stamp.style.justifyContent="center";
+   stamp.style.color="red";
+   stamp.style.fontWeight="bold";
+   stamp.textContent=role;
+
+   cell.appendChild(stamp);
+  });
+ });
+}
+
 function updateVisibleDays(){
+
  const visible=[...new Set([...daysWithData,activeDay])];
+
  document.querySelectorAll("[data-day]").forEach(el=>{
   const d=parseInt(el.dataset.day);
   el.style.display=visible.includes(d)?"":"none";
  });
 }
 
-/* DATE SELECT */
 inspectionDate.addEventListener("change",()=>{
 
  const date=new Date(inspectionDate.value);
@@ -210,7 +263,6 @@ inspectionDate.addEventListener("change",()=>{
  });
 });
 
-/* SAVE */
 async function saveReceiving(){
 
  if(!activeDay) return alert("Select inspection date first");
@@ -253,6 +305,5 @@ async function saveReceiving(){
  alert("Receiving Saved");
 }
 
-/* INIT */
 loadHistory();
 updateVisibleDays();
