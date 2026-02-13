@@ -37,13 +37,12 @@ function buildMeasurementTableFromExcel(rows){
  measureBody.innerHTML="";
  dynamicMeasurements=[];
 
- rows.forEach((r,index)=>{
+ let runningNo=1;
+ let measureIndex=0;
+
+ rows.forEach((r)=>{
 
  const tr=document.createElement("tr");
-
- /* ======================
-    CATEGORY HEADER ROW
- ====================== */
 
  if(r.type==="category"){
 
@@ -55,16 +54,13 @@ function buildMeasurementTableFromExcel(rows){
 
   tr.appendChild(td);
   measureBody.appendChild(tr);
-
   return;
  }
 
- /* ======================
-    NORMAL MEASUREMENT ROW
- ====================== */
+ tr.dataset.measureIndex=measureIndex;
 
  tr.innerHTML=`
- <td>${index+1}</td>
+ <td>${runningNo++}</td>
  <td>${r.item}</td>
  <td class="std-col">${r.std||""}</td>
  <td>${r.minus||""}</td>
@@ -92,14 +88,11 @@ function buildMeasurementTableFromExcel(rows){
     const sel=document.createElement("select");
     sel.disabled=true;
 
-    const ok=document.createElement("option");
-    ok.value="OK"; ok.text="OK";
-
-    const ng=document.createElement("option");
-    ng.value="NG"; ng.text="NG";
-
-    sel.appendChild(ok);
-    sel.appendChild(ng);
+    ["OK","NG"].forEach(v=>{
+     const opt=document.createElement("option");
+     opt.value=v; opt.text=v;
+     sel.appendChild(opt);
+    });
 
     sel.addEventListener("change",()=>evaluateCell(td,r));
     box.appendChild(sel);
@@ -111,9 +104,11 @@ function buildMeasurementTableFromExcel(rows){
  }
 
  measureBody.appendChild(tr);
+ measureIndex++;
 
-});
+ });
 }
+
 
 /* ================================
    BLOCK 04 — CELL EVALUATION
@@ -144,92 +139,6 @@ function evaluateCell(td,m){
 
 
 /* ================================
-   BLOCK 05 — BOTTOM STRUCTURE
-================================ */
-
-function addBottomRow(label,role){
-
- const tr=document.createElement("tr");
- tr.dataset.role=role;
-
- const first=document.createElement("td");
- first.colSpan=5;
- first.textContent=label;
- first.style.fontWeight="bold";
-
- tr.appendChild(first);
-
- for(let d=1;d<=31;d++){
-  const td=document.createElement("td");
-  td.dataset.day=d;
-  tr.appendChild(td);
- }
-
- measureBody.appendChild(tr);
-}
-
-
-/* ================================
-   BLOCK 06 — STAMP ENGINE
-================================ */
-
-function applyStamp(role){
-
- if(!activeDay) return;
-
- const row=document.querySelector(`tr[data-role="${role}"]`);
- const cell=row.querySelector(`td[data-day="${activeDay}"]`);
-
- if(!stampedDays[activeDay]) stampedDays[activeDay]={};
- if(stampedDays[activeDay][role]) return;
-
- const stamp=document.createElement("div");
-
- stamp.style.border="2px solid red";
- stamp.style.borderRadius="50%";
- stamp.style.width="60px";
- stamp.style.height="60px";
- stamp.style.display="flex";
- stamp.style.alignItems="center";
- stamp.style.justifyContent="center";
- stamp.style.color="red";
- stamp.style.fontWeight="bold";
- stamp.textContent=role;
-
- cell.appendChild(stamp);
-
- stampedDays[activeDay][role]=true;
-}
-
-
-/* ================================
-   BLOCK 07 — HISTORY LOADER
-================================ */
-
-async function loadHistory(){
-
- try{
-
-  const res=await fetch(API_URL + "/receiving/history/1");
-  const data=await res.json();
-
-  daysWithData=data.days||[];
-  lockedDays=[...daysWithData];
-
-  stampedDays=data.stamps||{};
-  measurementsHistory=data.measurements||{};
-
-  rebuildHistory();
-  rebuildStamps();
-  updateVisibleDays();
-
- }catch(e){
-  console.log("history load fail",e);
- }
-}
-
-
-/* ================================
    BLOCK 08 — HISTORY REBUILD
 ================================ */
 
@@ -237,17 +146,17 @@ function rebuildHistory(){
 
  Object.keys(measurementsHistory).forEach(day=>{
 
-  const rows=document.querySelectorAll("#measureBody tr");
+  document.querySelectorAll("#measureBody tr").forEach(tr=>{
 
-  rows.forEach((tr,index)=>{
+   if(!tr.dataset.measureIndex) return;
 
-   if(tr.dataset.role) return;
+   const idx=parseInt(tr.dataset.measureIndex);
 
    const td=tr.querySelector(`td[data-day="${day}"]`);
    if(!td) return;
 
    const inputs=td.querySelectorAll("input,select");
-   const values=measurementsHistory[day][index]||[];
+   const values=measurementsHistory[day][idx]||[];
 
    inputs.forEach((inp,i)=>{
     if(values[i]!==undefined){
@@ -256,137 +165,10 @@ function rebuildHistory(){
     }
    });
 
-   const m=dynamicMeasurements[index];
+   const m=dynamicMeasurements[idx];
    evaluateCell(td,m);
   });
  });
-}
-
-
-/* ================================
-   BLOCK 09 — STAMP REBUILD
-================================ */
-
-function rebuildStamps(){
-
- Object.keys(stampedDays).forEach(day=>{
-
-  const roles=stampedDays[day];
-
-  Object.keys(roles).forEach(role=>{
-
-   const row=document.querySelector(`tr[data-role="${role}"]`);
-   if(!row) return;
-
-   const cell=row.querySelector(`td[data-day="${day}"]`);
-   if(!cell) return;
-
-   const stamp=document.createElement("div");
-
-   stamp.style.border="2px solid red";
-   stamp.style.borderRadius="50%";
-   stamp.style.width="60px";
-   stamp.style.height="60px";
-   stamp.style.display="flex";
-   stamp.style.alignItems="center";
-   stamp.style.justifyContent="center";
-   stamp.style.color="red";
-   stamp.style.fontWeight="bold";
-   stamp.textContent=role;
-
-   cell.appendChild(stamp);
-  });
- });
-}
-
-
-/* ================================
-   BLOCK 10 — DAY VISIBILITY
-================================ */
-
-function updateVisibleDays(){
-
- const visible=[...new Set([...daysWithData,activeDay])];
-
- document.querySelectorAll("[data-day]").forEach(el=>{
-  const d=parseInt(el.dataset.day);
-  el.style.display=visible.includes(d)?"":"none";
- });
-}
-
-
-/* ================================
-   BLOCK 11 — DATE SELECTION
-================================ */
-
-inspectionDate.addEventListener("change",()=>{
-
- const date=new Date(inspectionDate.value);
- activeDay=date.getDate();
-
- updateVisibleDays();
-
- document.querySelectorAll("td[data-day]").forEach(td=>{
-
-  const day=parseInt(td.dataset.day);
-  const inputs=td.querySelectorAll("input,select");
-
-  if(day===activeDay && !lockedDays.includes(day)){
-   inputs.forEach(i=>i.disabled=false);
-  }else{
-   inputs.forEach(i=>i.disabled=true);
-  }
-
- });
-});
-
-
-/* ================================
-   BLOCK 12 — SAVE ENGINE
-================================ */
-
-async function saveReceiving(){
-
- if(!activeDay) return alert("Select inspection date first");
-
- const measurementsData=[];
- const stampsData=stampedDays[activeDay]||{};
-
- document.querySelectorAll("#measureBody tr").forEach(tr=>{
-
-  if(tr.dataset.role) return;
-
-  const td=tr.querySelector(`td[data-day="${activeDay}"]`);
-  const inputs=td.querySelectorAll("input,select");
-
-  const values=[];
-  inputs.forEach(i=>values.push(i.value));
-
-  measurementsData.push(values);
- });
-
- const payload={
-  part_id:1,
-  inspection_day:activeDay,
-  inspection_date:inspectionDate.value,
-  measurements:measurementsData,
-  stamps:stampsData
- };
-
- const res=await fetch(API_URL + "/receiving/save",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify(payload)
- });
-
- const result=await res.json();
-
- daysWithData=result.days;
- lockedDays=[...daysWithData];
-
- updateVisibleDays();
-
- alert("Receiving Saved");
 }
 
 
@@ -409,41 +191,26 @@ async function loadExcel(){
 
  const measurements=[];
 
- for(let i=10;i<rows.length;i++){
+ for(let i=0;i<rows.length;i++){
 
   const row=rows[i];
-  if(!row || row.length===0) continue;
+  if(!row) continue;
 
-const item=row.find(c=>typeof c==="string");
-if(!item) continue;
-
-if(item.toLowerCase()==="no." ||
-   item.toLowerCase()==="no" ||
-   item.toLowerCase()==="item")
-   continue;
-
+  const item=row.find(c=>typeof c==="string");
+  if(!item) continue;
 
   const name=item.toLowerCase();
 
   if(name.includes("vendor")) break;
   if(name.includes("stamp")) break;
 
-let type="appearance";
+  let type="appearance";
 
-/* CATEGORY HEADER ROW */
-if(
- name==="appearance" ||
- name==="dimension" ||
- name==="function"
-){
- type="category";
-}
-
-/* REAL MEASUREMENT */
-else if(name.includes("dimension")) type="dimension";
-else if(name.includes("function")) type="function";
-
-
+  if(name==="appearance"||name==="dimension"||name==="function"){
+   type="category";
+  }
+  else if(name.includes("dimension")) type="dimension";
+  else if(name.includes("function")) type="function";
 
   measurements.push({
    type:type,
@@ -456,16 +223,8 @@ else if(name.includes("function")) type="function";
  }
 
  buildMeasurementTableFromExcel(measurements);
-
 }
 
-
-/* ================================
-   BLOCK 14 — SYSTEM INIT
-================================ */
-
-loadHistory();
-updateVisibleDays();
 
 /* =====================================================
    BLOCK 17 — EXCEL STATIC HEADER APPLY (SMART SCAN)
@@ -473,15 +232,19 @@ updateVisibleDays();
 
 function applyExcelHeader(rows){
 
- try{
+ let part="",vendor="",type="";
 
-  document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText = rows[0][1] || "";
-  document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText = rows[1][1] || "";
-  document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText = rows[2][1] || "";
+ rows.forEach(r=>{
+  if(!r) return;
+  const line=r.join(" ").toLowerCase();
 
- }catch(e){
-  console.log("Header apply failed",e);
- }
+  if(line.includes("part")&& !part) part=r[r.length-1];
+  if(line.includes("vendor")&& !vendor) vendor=r[r.length-1];
+  if(line.includes("type")&& !type) type=r[r.length-1];
+ });
+
+ document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText=part;
+ document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText=vendor;
+ document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText=type;
 
 }
-
