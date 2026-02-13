@@ -113,6 +113,7 @@ function buildMeasurementTableFromExcel(rows){
  measureBody.appendChild(tr);
 
 });
+}
 
 /* ================================
    BLOCK 04 — CELL EVALUATION
