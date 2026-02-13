@@ -12,6 +12,7 @@ let activeDay=null;
 let daysWithData=[];
 let stampedDays={};
 let measurementsHistory={};
+let dynamicMeasurements=[];
 let lockedDays=[];
 
 
@@ -28,13 +29,8 @@ for(let d=1;d<=31;d++){
 
 
 /* ================================
-   BLOCK 03 — MEASUREMENT MASTER
+   BLOCK 03 — DYNAMIC TABLE BUILDER
 ================================ */
-/* =====================================================
-   BLOCK 03-B — DYNAMIC MEASUREMENT TABLE BUILDER
-===================================================== */
-
-let dynamicMeasurements=[];
 
 function buildMeasurementTableFromExcel(rows){
 
@@ -101,25 +97,29 @@ function buildMeasurementTableFromExcel(rows){
  addBottomRow("Checker Stamp","Checker");
  addBottomRow("Approver Stamp","Approver");
 
+ rebuildStamps();
+ updateVisibleDays();
 }
 
 
-
-/* =====================================================
-   BLOCK 04 — CELL EVALUATION ENGINE
-===================================================== */
+/* ================================
+   BLOCK 04 — CELL EVALUATION
+================================ */
 
 function evaluateCell(td,m){
+
  const inputs=td.querySelectorAll("input,select");
  let red=false;
 
  if(m.type==="dimension"){
   const min=m.std-m.minus;
   const max=m.std+m.plus;
+
   inputs.forEach(i=>{
    const v=parseFloat(i.value);
    if(!isNaN(v)&&(v<min||v>max)) red=true;
   });
+
  }else{
   inputs.forEach(i=>{
    if(i.value==="NG") red=true;
@@ -130,16 +130,9 @@ function evaluateCell(td,m){
 }
 
 
-/* =====================================================
-   BLOCK 05 — BUILD MEASUREMENT TABLE
-===================================================== */
-
-
-
-
-/* =====================================================
-   BLOCK 06 — BOTTOM STRUCTURE ROWS
-===================================================== */
+/* ================================
+   BLOCK 05 — BOTTOM STRUCTURE
+================================ */
 
 function addBottomRow(label,role){
 
@@ -162,16 +155,10 @@ function addBottomRow(label,role){
  measureBody.appendChild(tr);
 }
 
-addBottomRow("Vendor Production Date","vendor");
-addBottomRow("Inspection Date","inspection");
-addBottomRow("PIC Stamp","PIC");
-addBottomRow("Checker Stamp","Checker");
-addBottomRow("Approver Stamp","Approver");
 
-
-/* =====================================================
-   BLOCK 07 — STAMP ENGINE
-===================================================== */
+/* ================================
+   BLOCK 06 — STAMP ENGINE
+================================ */
 
 function applyStamp(role){
 
@@ -202,9 +189,9 @@ function applyStamp(role){
 }
 
 
-/* =====================================================
-   BLOCK 08 — HISTORY LOADER
-===================================================== */
+/* ================================
+   BLOCK 07 — HISTORY LOADER
+================================ */
 
 async function loadHistory(){
 
@@ -214,7 +201,7 @@ async function loadHistory(){
   const data=await res.json();
 
   daysWithData=data.days||[];
-    lockedDays=[...daysWithData];
+  lockedDays=[...daysWithData];
 
   stampedDays=data.stamps||{};
   measurementsHistory=data.measurements||{};
@@ -229,9 +216,9 @@ async function loadHistory(){
 }
 
 
-/* =====================================================
-   BLOCK 09 — HISTORY REBUILDER
-===================================================== */
+/* ================================
+   BLOCK 08 — HISTORY REBUILD
+================================ */
 
 function rebuildHistory(){
 
@@ -247,7 +234,6 @@ function rebuildHistory(){
    if(!td) return;
 
    const inputs=td.querySelectorAll("input,select");
-
    const values=measurementsHistory[day][index]||[];
 
    inputs.forEach((inp,i)=>{
@@ -257,16 +243,16 @@ function rebuildHistory(){
     }
    });
 
-   const m=measurements[index];
+   const m=dynamicMeasurements[index];
    evaluateCell(td,m);
   });
  });
 }
 
 
-/* =====================================================
-   BLOCK 10 — STAMP REBUILDER
-===================================================== */
+/* ================================
+   BLOCK 09 — STAMP REBUILD
+================================ */
 
 function rebuildStamps(){
 
@@ -301,9 +287,9 @@ function rebuildStamps(){
 }
 
 
-/* =====================================================
-   BLOCK 11 — DAY VISIBILITY ENGINE
-===================================================== */
+/* ================================
+   BLOCK 10 — DAY VISIBILITY
+================================ */
 
 function updateVisibleDays(){
 
@@ -316,9 +302,9 @@ function updateVisibleDays(){
 }
 
 
-/* =====================================================
-   BLOCK 12 — DATE SELECTION ENGINE
-===================================================== */
+/* ================================
+   BLOCK 11 — DATE SELECTION
+================================ */
 
 inspectionDate.addEventListener("change",()=>{
 
@@ -339,13 +325,12 @@ inspectionDate.addEventListener("change",()=>{
   }
 
  });
-
 });
 
 
-/* =====================================================
-   BLOCK 13 — SAVE ENGINE
-===================================================== */
+/* ================================
+   BLOCK 12 — SAVE ENGINE
+================================ */
 
 async function saveReceiving(){
 
@@ -392,17 +377,9 @@ async function saveReceiving(){
 }
 
 
-
-/* =====================================================
-   BLOCK 14 — SYSTEM INIT
-===================================================== */
-
-loadHistory();
-updateVisibleDays();
-
-/* =====================================================
-   BLOCK 15 — EXCEL IMPORT ENGINE
-===================================================== */
+/* ================================
+   BLOCK 13 — EXCEL IMPORT
+================================ */
 
 async function loadExcel(){
 
@@ -413,76 +390,40 @@ async function loadExcel(){
 
  const workbook=XLSX.read(data);
  const sheet=workbook.Sheets[workbook.SheetNames[0]];
+ const json=XLSX.utils.sheet_to_json(sheet,{header:1});
 
- const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
+ const measurements=[];
 
- applyExcelData(rows);
-   const measurements=[];
+ for(let i=11;i<json.length;i++){
 
-for(let i=11;i<json.length;i++){
+  const row=json[i];
+  if(!row[1]) break;
 
- const row=json[i];
+  const item=row[1].toString();
 
- if(!row[1]) break;
+  let type="appearance";
+  if(item.toLowerCase().includes("dimension")) type="dimension";
+  if(item.toLowerCase().includes("function")) type="function";
 
- const item=row[1].toString();
-
- let type="appearance";
- if(item.toLowerCase().includes("dimension")) type="dimension";
- if(item.toLowerCase().includes("function")) type="function";
-
- measurements.push({
-  type:type,
-  item:item,
-  std:row[2],
-  minus:row[3],
-  plus:row[4]
- });
-
-}
-
-buildMeasurementTableFromExcel(measurements);
-
-}
-
-
-/* =====================================================
-   BLOCK 16 — AUTO APPLY EXCEL DATA (FIXED VERSION)
-===================================================== */
-
-function applyExcelData(rows){
-
- if(!activeDay){
-  alert("Select inspection date first");
-  return;
- }
-
- const startRow=2; // skip Excel header rows
-
- const dataRows=rows.slice(startRow);
-
- const measureRows=document.querySelectorAll("#measureBody tr");
-
- dataRows.forEach((row,index)=>{
-
-  const tr=measureRows[index];
-  if(!tr || tr.dataset.role) return;
-
-  const td=tr.querySelector(`td[data-day="${activeDay}"]`);
-  if(!td) return;
-
-  const inputs=td.querySelectorAll("input,select");
-
-  inputs.forEach((inp,i)=>{
-   if(row[i]!=null){
-    inp.value=row[i];
-   }
+  measurements.push({
+   type:type,
+   item:item,
+   std:row[2],
+   minus:row[3],
+   plus:row[4]
   });
 
-  evaluateCell(td,measurements[index]);
- });
+ }
 
- alert("Excel Applied ✔");
+ buildMeasurementTableFromExcel(measurements);
+
+ alert("Excel Structure Loaded ✔");
 }
 
 
+/* ================================
+   BLOCK 14 — SYSTEM INIT
+================================ */
+
+loadHistory();
+updateVisibleDays();
