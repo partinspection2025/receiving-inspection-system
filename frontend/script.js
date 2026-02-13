@@ -378,7 +378,7 @@ async function saveReceiving(){
 
 
 /* =====================================================
-   BLOCK 15 — EXCEL IMPORT ENGINE (STEP 11 VERSION)
+   BLOCK 15 — EXCEL IMPORT ENGINE (ROBUST VERSION)
 ===================================================== */
 
 async function loadExcel(){
@@ -390,33 +390,35 @@ async function loadExcel(){
 
  const workbook=XLSX.read(data);
  const sheet=workbook.Sheets[workbook.SheetNames[0]];
-
  const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
 
- /* STEP 11 — APPLY STATIC HEADER */
  applyExcelHeader(rows);
 
- /* STEP 10 — BUILD MEASUREMENT TABLE */
  const measurements=[];
 
  for(let i=10;i<rows.length;i++){
 
   const row=rows[i];
+  if(!row || row.length===0) continue;
 
-  if(!row[1]) break;
+  const item=row.find(c=>typeof c==="string");
+  if(!item) continue;
 
-  const item=row[1].toString();
+  const name=item.toLowerCase();
+
+  if(name.includes("vendor")) break;
+  if(name.includes("stamp")) break;
 
   let type="appearance";
-  if(item.toLowerCase().includes("dimension")) type="dimension";
-  if(item.toLowerCase().includes("function")) type="function";
+  if(name.includes("dimension")) type="dimension";
+  if(name.includes("function")) type="function";
 
   measurements.push({
    type:type,
    item:item,
-   std:row[2],
-   minus:row[3],
-   plus:row[4]
+   std:row[2]||"",
+   minus:row[3]||"",
+   plus:row[4]||""
   });
 
  }
@@ -424,7 +426,6 @@ async function loadExcel(){
  buildMeasurementTableFromExcel(measurements);
 
 }
-
 
 
 /* ================================
@@ -435,21 +436,32 @@ loadHistory();
 updateVisibleDays();
 
 /* =====================================================
-   BLOCK 17 — EXCEL STATIC HEADER APPLY
+   BLOCK 17 — EXCEL STATIC HEADER APPLY (SMART SCAN)
 ===================================================== */
 
 function applyExcelHeader(rows){
 
- try{
+ const findValue=(label)=>{
 
-  document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText = rows[0][1] || "";
-  document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText = rows[1][1] || "";
-  document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText = rows[2][1] || "";
-  document.querySelector(".static-header tr:nth-child(4) td:nth-child(2)").innerText = rows[3][1] || "";
-  document.querySelector(".static-header tr:nth-child(5) td:nth-child(2)").innerText = rows[4][1] || "";
+  for(const r of rows){
+   if(!r) continue;
 
- }catch(e){
-  console.log("Header apply failed",e);
- }
+   for(let i=0;i<r.length;i++){
+
+    if(typeof r[i]==="string" &&
+       r[i].toLowerCase().includes(label)){
+
+       return r[i+1] || r[i+2] || "";
+    }
+   }
+  }
+  return "";
+ };
+
+ document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText=findValue("part name");
+ document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText=findValue("part number");
+ document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText=findValue("supplier");
+ document.querySelector(".static-header tr:nth-child(4) td:nth-child(2)").innerText=findValue("drawing");
+ document.querySelector(".static-header tr:nth-child(5) td:nth-child(2)").innerText=findValue("document");
 
 }
