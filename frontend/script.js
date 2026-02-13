@@ -1,3 +1,7 @@
+/* =====================================================
+   BLOCK 01 — API + GLOBAL STATE
+===================================================== */
+
 const API_URL = "https://receiving-inspection-system-production.up.railway.app";
 
 const dayHeader=document.getElementById("dayHeader");
@@ -9,12 +13,22 @@ let daysWithData=[];
 let stampedDays={};
 let measurementsHistory={};
 
+
+/* =====================================================
+   BLOCK 02 — CREATE DAY HEADER
+===================================================== */
+
 for(let d=1;d<=31;d++){
  const th=document.createElement("th");
  th.textContent=d;
  th.dataset.day=d;
  dayHeader.appendChild(th);
 }
+
+
+/* =====================================================
+   BLOCK 03 — MEASUREMENT MASTER DATA
+===================================================== */
 
 const measurements=[
  {type:"appearance",no:1,item:"Appearance - Scratch"},
@@ -24,6 +38,11 @@ const measurements=[
  {type:"dimension",no:5,item:"Dimension - Width",std:60,minus:4,plus:5},
  {type:"function",no:6,item:"Function - Fit"}
 ];
+
+
+/* =====================================================
+   BLOCK 04 — CELL EVALUATION ENGINE
+===================================================== */
 
 function evaluateCell(td,m){
  const inputs=td.querySelectorAll("input,select");
@@ -44,6 +63,11 @@ function evaluateCell(td,m){
 
  td.style.backgroundColor=red?"#ffb3b3":"";
 }
+
+
+/* =====================================================
+   BLOCK 05 — BUILD MEASUREMENT TABLE
+===================================================== */
 
 measurements.forEach(m=>{
 
@@ -97,6 +121,11 @@ measurements.forEach(m=>{
  measureBody.appendChild(tr);
 });
 
+
+/* =====================================================
+   BLOCK 06 — BOTTOM STRUCTURE ROWS
+===================================================== */
+
 function addBottomRow(label,role){
 
  const tr=document.createElement("tr");
@@ -123,6 +152,11 @@ addBottomRow("Inspection Date","inspection");
 addBottomRow("PIC Stamp","PIC");
 addBottomRow("Checker Stamp","Checker");
 addBottomRow("Approver Stamp","Approver");
+
+
+/* =====================================================
+   BLOCK 07 — STAMP ENGINE
+===================================================== */
 
 function applyStamp(role){
 
@@ -152,6 +186,11 @@ function applyStamp(role){
  stampedDays[activeDay][role]=true;
 }
 
+
+/* =====================================================
+   BLOCK 08 — HISTORY LOADER
+===================================================== */
+
 async function loadHistory(){
 
  try{
@@ -171,6 +210,11 @@ async function loadHistory(){
   console.log("history load fail",e);
  }
 }
+
+
+/* =====================================================
+   BLOCK 09 — HISTORY REBUILDER
+===================================================== */
 
 function rebuildHistory(){
 
@@ -201,6 +245,11 @@ function rebuildHistory(){
   });
  });
 }
+
+
+/* =====================================================
+   BLOCK 10 — STAMP REBUILDER
+===================================================== */
 
 function rebuildStamps(){
 
@@ -234,6 +283,11 @@ function rebuildStamps(){
  });
 }
 
+
+/* =====================================================
+   BLOCK 11 — DAY VISIBILITY ENGINE
+===================================================== */
+
 function updateVisibleDays(){
 
  const visible=[...new Set([...daysWithData,activeDay])];
@@ -243,6 +297,11 @@ function updateVisibleDays(){
   el.style.display=visible.includes(d)?"":"none";
  });
 }
+
+
+/* =====================================================
+   BLOCK 12 — DATE SELECTION ENGINE
+===================================================== */
 
 inspectionDate.addEventListener("change",()=>{
 
@@ -262,6 +321,11 @@ inspectionDate.addEventListener("change",()=>{
   }
  });
 });
+
+
+/* =====================================================
+   BLOCK 13 — SAVE ENGINE
+===================================================== */
 
 async function saveReceiving(){
 
@@ -304,6 +368,11 @@ async function saveReceiving(){
 
  alert("Receiving Saved");
 }
+
+
+/* =====================================================
+   BLOCK 14 — SYSTEM INIT
+===================================================== */
 
 loadHistory();
 updateVisibleDays();
