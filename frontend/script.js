@@ -377,9 +377,9 @@ async function saveReceiving(){
 }
 
 
-/* ================================
-   BLOCK 13 — EXCEL IMPORT
-================================ */
+/* =====================================================
+   BLOCK 15 — EXCEL IMPORT ENGINE (STEP 11 VERSION)
+===================================================== */
 
 async function loadExcel(){
 
@@ -390,13 +390,19 @@ async function loadExcel(){
 
  const workbook=XLSX.read(data);
  const sheet=workbook.Sheets[workbook.SheetNames[0]];
- const json=XLSX.utils.sheet_to_json(sheet,{header:1});
 
+ const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
+
+ /* STEP 11 — APPLY STATIC HEADER */
+ applyExcelHeader(rows);
+
+ /* STEP 10 — BUILD MEASUREMENT TABLE */
  const measurements=[];
 
- for(let i=11;i<json.length;i++){
+ for(let i=10;i<rows.length;i++){
 
-  const row=json[i];
+  const row=rows[i];
+
   if(!row[1]) break;
 
   const item=row[1].toString();
@@ -417,8 +423,8 @@ async function loadExcel(){
 
  buildMeasurementTableFromExcel(measurements);
 
- alert("Excel Structure Loaded ✔");
 }
+
 
 
 /* ================================
@@ -427,3 +433,23 @@ async function loadExcel(){
 
 loadHistory();
 updateVisibleDays();
+
+/* =====================================================
+   BLOCK 17 — EXCEL STATIC HEADER APPLY
+===================================================== */
+
+function applyExcelHeader(rows){
+
+ try{
+
+  document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText = rows[0][1] || "";
+  document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText = rows[1][1] || "";
+  document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText = rows[2][1] || "";
+  document.querySelector(".static-header tr:nth-child(4) td:nth-child(2)").innerText = rows[3][1] || "";
+  document.querySelector(".static-header tr:nth-child(5) td:nth-child(2)").innerText = rows[4][1] || "";
+
+ }catch(e){
+  console.log("Header apply failed",e);
+ }
+
+}
