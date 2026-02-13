@@ -12,6 +12,7 @@ let activeDay=null;
 let daysWithData=[];
 let stampedDays={};
 let measurementsHistory={};
+let lockedDays=[];
 
 
 /* ================================
@@ -199,6 +200,8 @@ async function loadHistory(){
   const data=await res.json();
 
   daysWithData=data.days||[];
+    lockedDays=[...daysWithData];
+
   stampedDays=data.stamps||{};
   measurementsHistory=data.measurements||{};
 
@@ -304,23 +307,23 @@ function updateVisibleDays(){
 ===================================================== */
 
 inspectionDate.addEventListener("change",()=>{
+const date=new Date(inspectionDate.value);
+activeDay=date.getDate();
 
- const date=new Date(inspectionDate.value);
- activeDay=date.getDate();
+updateVisibleDays();
 
- updateVisibleDays();
+document.querySelectorAll("td[data-day]").forEach(td=>{
 
- document.querySelectorAll("td[data-day]").forEach(td=>{
+ const day=parseInt(td.dataset.day);
+ const inputs=td.querySelectorAll("input,select");
 
-  const inputs=td.querySelectorAll("input,select");
-
-  if(parseInt(td.dataset.day)===activeDay){
-   inputs.forEach(i=>i.disabled=false);
-  }else{
-   inputs.forEach(i=>i.disabled=true);
-  }
- });
+ if(day===activeDay && !lockedDays.includes(day)){
+  inputs.forEach(i=>i.disabled=false);
+ }else{
+  inputs.forEach(i=>i.disabled=true);
+ }
 });
+
 
 
 /* =====================================================
@@ -364,6 +367,8 @@ async function saveReceiving(){
  const result=await res.json();
 
  daysWithData=result.days;
+   lockedDays=[...daysWithData];
+
  updateVisibleDays();
 
  alert("Receiving Saved");
