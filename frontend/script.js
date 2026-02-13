@@ -39,68 +39,80 @@ function buildMeasurementTableFromExcel(rows){
 
  rows.forEach((r,index)=>{
 
-  const tr=document.createElement("tr");
+ const tr=document.createElement("tr");
 
-  tr.innerHTML=`
-  <td>${index+1}</td>
-  <td>${r.item}</td>
-  <td class="std-col">${r.std||""}</td>
-  <td>${r.minus||""}</td>
-  <td>${r.plus||""}</td>`;
+ /* ======================
+    CATEGORY HEADER ROW
+ ====================== */
 
-  dynamicMeasurements.push(r);
+ if(r.type==="category"){
 
-  for(let d=1;d<=31;d++){
+  const td=document.createElement("td");
+  td.colSpan=36;
+  td.innerText=r.item;
+  td.style.background="#ccffcc";
+  td.style.fontWeight="bold";
 
-   const td=document.createElement("td");
-   td.dataset.day=d;
+  tr.appendChild(td);
+  measureBody.appendChild(tr);
 
-   const box=document.createElement("div");
+  return;
+ }
 
-   if(r.type==="dimension"){
-    for(let i=0;i<3;i++){
-     const inp=document.createElement("input");
-     inp.type="number";
-     inp.disabled=true;
-     inp.addEventListener("input",()=>evaluateCell(td,r));
-     box.appendChild(inp);
-    }
-   }else{
-    for(let i=0;i<3;i++){
-     const sel=document.createElement("select");
-     sel.disabled=true;
+ /* ======================
+    NORMAL MEASUREMENT ROW
+ ====================== */
 
-     const ok=document.createElement("option");
-     ok.value="OK"; ok.text="OK";
+ tr.innerHTML=`
+ <td>${index+1}</td>
+ <td>${r.item}</td>
+ <td class="std-col">${r.std||""}</td>
+ <td>${r.minus||""}</td>
+ <td>${r.plus||""}</td>`;
 
-     const ng=document.createElement("option");
-     ng.value="NG"; ng.text="NG";
+ dynamicMeasurements.push(r);
 
-     sel.appendChild(ok);
-     sel.appendChild(ng);
+ for(let d=1;d<=31;d++){
 
-     sel.addEventListener("change",()=>evaluateCell(td,r));
-     box.appendChild(sel);
-    }
+  const td=document.createElement("td");
+  td.dataset.day=d;
+
+  const box=document.createElement("div");
+
+  if(r.type==="dimension"){
+   for(let i=0;i<3;i++){
+    const inp=document.createElement("input");
+    inp.type="number";
+    inp.disabled=true;
+    inp.addEventListener("input",()=>evaluateCell(td,r));
+    box.appendChild(inp);
    }
+  }else{
+   for(let i=0;i<3;i++){
+    const sel=document.createElement("select");
+    sel.disabled=true;
 
-   td.appendChild(box);
-   tr.appendChild(td);
+    const ok=document.createElement("option");
+    ok.value="OK"; ok.text="OK";
+
+    const ng=document.createElement("option");
+    ng.value="NG"; ng.text="NG";
+
+    sel.appendChild(ok);
+    sel.appendChild(ng);
+
+    sel.addEventListener("change",()=>evaluateCell(td,r));
+    box.appendChild(sel);
+   }
   }
 
-  measureBody.appendChild(tr);
- });
+  td.appendChild(box);
+  tr.appendChild(td);
+ }
 
- addBottomRow("Vendor Production Date","vendor");
- addBottomRow("Inspection Date","inspection");
- addBottomRow("PIC Stamp","PIC");
- addBottomRow("Checker Stamp","Checker");
- addBottomRow("Approver Stamp","Approver");
+ measureBody.appendChild(tr);
 
- rebuildStamps();
- updateVisibleDays();
-}
-
+});
 
 /* ================================
    BLOCK 04 — CELL EVALUATION
@@ -415,9 +427,14 @@ if(item.toLowerCase()==="no." ||
   if(name.includes("vendor")) break;
   if(name.includes("stamp")) break;
 
-  let type="appearance";
-  if(name.includes("dimension")) type="dimension";
-  if(name.includes("function")) type="function";
+let type="appearance";
+
+if(name.includes("appearance")) type="category";
+else if(name.includes("dimension")) type="category";
+else if(name.includes("function")) type="category";
+else if(name.includes("dim")) type="dimension";
+else if(name.includes("func")) type="function";
+
 
   measurements.push({
    type:type,
@@ -447,26 +464,15 @@ updateVisibleDays();
 
 function applyExcelHeader(rows){
 
- const findValue=(label)=>{
+ try{
 
-  for(const r of rows){
-   if(!r) continue;
+  document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText = rows[0][1] || "";
+  document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText = rows[1][1] || "";
+  document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText = rows[2][1] || "";
 
-   for(let i=0;i<r.length;i++){
-
-    if(typeof r[i]==="string" &&
-       r[i].toLowerCase().includes(label)){
-
-       return r[i+1] || r[i+2] || "";
-    }
-   }
-  }
-  return "";
- };
-
- document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText=findValue("part name");
- document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText=findValue("vendor");
- document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText=findValue("type");
-
+ }catch(e){
+  console.log("Header apply failed",e);
+ }
 
 }
+
