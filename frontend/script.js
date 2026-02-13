@@ -1,8 +1,8 @@
-/* =====================================================
-   BLOCK 01 — API + GLOBAL STATE
-===================================================== */
+/* ================================
+   BLOCK 01 — SYSTEM CONFIG
+================================ */
 
-const API_URL = "https://receiving-inspection-system-production.up.railway.app";
+const API_URL="https://receiving-inspection-system-production.up.railway.app";
 
 const dayHeader=document.getElementById("dayHeader");
 const measureBody=document.getElementById("measureBody");
@@ -14,9 +14,9 @@ let stampedDays={};
 let measurementsHistory={};
 
 
-/* =====================================================
-   BLOCK 02 — CREATE DAY HEADER
-===================================================== */
+/* ================================
+   BLOCK 02 — DAY HEADER ENGINE
+================================ */
 
 for(let d=1;d<=31;d++){
  const th=document.createElement("th");
@@ -26,9 +26,9 @@ for(let d=1;d<=31;d++){
 }
 
 
-/* =====================================================
-   BLOCK 03 — MEASUREMENT MASTER DATA
-===================================================== */
+/* ================================
+   BLOCK 03 — MEASUREMENT MASTER
+================================ */
 
 const measurements=[
  {type:"appearance",no:1,item:"Appearance - Scratch"},
