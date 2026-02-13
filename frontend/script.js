@@ -401,8 +401,14 @@ async function loadExcel(){
   const row=rows[i];
   if(!row || row.length===0) continue;
 
-  const item=row.find(c=>typeof c==="string");
-  if(!item) continue;
+const item=row.find(c=>typeof c==="string");
+if(!item) continue;
+
+if(item.toLowerCase()==="no." ||
+   item.toLowerCase()==="no" ||
+   item.toLowerCase()==="item")
+   continue;
+
 
   const name=item.toLowerCase();
 
