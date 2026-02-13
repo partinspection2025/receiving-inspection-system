@@ -429,11 +429,19 @@ if(item.toLowerCase()==="no." ||
 
 let type="appearance";
 
-if(name.includes("appearance")) type="category";
-else if(name.includes("dimension")) type="category";
-else if(name.includes("function")) type="category";
-else if(name.includes("dim")) type="dimension";
-else if(name.includes("func")) type="function";
+/* CATEGORY HEADER ROW */
+if(
+ name==="appearance" ||
+ name==="dimension" ||
+ name==="function"
+){
+ type="category";
+}
+
+/* REAL MEASUREMENT */
+else if(name.includes("dimension")) type="dimension";
+else if(name.includes("function")) type="function";
+
 
 
   measurements.push({
