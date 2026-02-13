@@ -407,14 +407,25 @@ async function loadExcel(){
 
 
 /* =====================================================
-   BLOCK 16 — AUTO APPLY EXCEL DATA
+   BLOCK 16 — AUTO APPLY EXCEL DATA (FIXED VERSION)
 ===================================================== */
 
 function applyExcelData(rows){
 
- rows.forEach((row,index)=>{
+ if(!activeDay){
+  alert("Select inspection date first");
+  return;
+ }
 
-  const tr=document.querySelectorAll("#measureBody tr")[index];
+ const startRow=2; // skip Excel header rows
+
+ const dataRows=rows.slice(startRow);
+
+ const measureRows=document.querySelectorAll("#measureBody tr");
+
+ dataRows.forEach((row,index)=>{
+
+  const tr=measureRows[index];
   if(!tr || tr.dataset.role) return;
 
   const td=tr.querySelector(`td[data-day="${activeDay}"]`);
@@ -423,13 +434,15 @@ function applyExcelData(rows){
   const inputs=td.querySelectorAll("input,select");
 
   inputs.forEach((inp,i)=>{
-   if(row[i]!==undefined){
+   if(row[i]!=null){
     inp.value=row[i];
    }
   });
 
   evaluateCell(td,measurements[index]);
  });
+
+ alert("Excel Applied ✔");
 }
 
 
