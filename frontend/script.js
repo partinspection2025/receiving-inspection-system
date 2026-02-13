@@ -465,9 +465,8 @@ function applyExcelHeader(rows){
  };
 
  document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText=findValue("part name");
- document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText=findValue("part number");
- document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText=findValue("supplier");
- document.querySelector(".static-header tr:nth-child(4) td:nth-child(2)").innerText=findValue("drawing");
- document.querySelector(".static-header tr:nth-child(5) td:nth-child(2)").innerText=findValue("document");
+ document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText=findValue("vendor");
+ document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText=findValue("type");
+
 
 }
