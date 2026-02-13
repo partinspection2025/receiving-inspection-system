@@ -178,17 +178,11 @@ def save_receiving(data: dict = Body(...), db: Session = Depends(get_db)):
 # Receiving History
 # ==============================
 @app.get("/receiving/history/{part_id}")
-def receiving_history(part_id:int):
+def receiving_history(part_id:int, db: Session = Depends(get_db)):
 
-    from database import SessionLocal
-    import json
-
-    db=SessionLocal()
-
-    rows=db.execute(
-        "SELECT inspection_day, measurements, stamps FROM receiving WHERE part_id=:pid",
-        {"pid":part_id}
-    ).fetchall()
+    rows = db.query(ReceivingRecord)\
+             .filter(ReceivingRecord.part_id == part_id)\
+             .all()
 
     days=[]
     stamps={}
@@ -196,18 +190,20 @@ def receiving_history(part_id:int):
 
     for r in rows:
 
-        day=r[0]
+        day=r.inspection_day
         days.append(day)
 
+        # stamps
         try:
-            measurements[day]=json.loads(r[1]) if r[1] else []
-        except:
-            measurements[day]=[]
-
-        try:
-            stamps[day]=json.loads(r[2]) if r[2] else {}
+            stamps[day]=json.loads(r.stamps) if r.stamps else {}
         except:
             stamps[day]={}
+
+        # measurements
+        try:
+            measurements[day]=json.loads(r.measurements) if r.measurements else []
+        except:
+            measurements[day]=[]
 
     return {
         "days":days,
