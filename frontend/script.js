@@ -307,21 +307,25 @@ function updateVisibleDays(){
 ===================================================== */
 
 inspectionDate.addEventListener("change",()=>{
-const date=new Date(inspectionDate.value);
-activeDay=date.getDate();
 
-updateVisibleDays();
+ const date=new Date(inspectionDate.value);
+ activeDay=date.getDate();
 
-document.querySelectorAll("td[data-day]").forEach(td=>{
+ updateVisibleDays();
 
- const day=parseInt(td.dataset.day);
- const inputs=td.querySelectorAll("input,select");
+ document.querySelectorAll("td[data-day]").forEach(td=>{
 
- if(day===activeDay && !lockedDays.includes(day)){
-  inputs.forEach(i=>i.disabled=false);
- }else{
-  inputs.forEach(i=>i.disabled=true);
- }
+  const day=parseInt(td.dataset.day);
+  const inputs=td.querySelectorAll("input,select");
+
+  if(day===activeDay && !lockedDays.includes(day)){
+   inputs.forEach(i=>i.disabled=false);
+  }else{
+   inputs.forEach(i=>i.disabled=true);
+  }
+
+ });
+
 });
 
 
