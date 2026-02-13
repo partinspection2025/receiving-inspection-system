@@ -29,7 +29,7 @@ for(let d=1;d<=31;d++){
 
 
 /* ================================
-   BLOCK 03 — DYNAMIC TABLE BUILDER
+   BLOCK 03 — TABLE BUILDER
 ================================ */
 
 function buildMeasurementTableFromExcel(rows){
@@ -37,13 +37,17 @@ function buildMeasurementTableFromExcel(rows){
  measureBody.innerHTML="";
  dynamicMeasurements=[];
 
- let numbering=1;
+ let counters={
+  appearance:0,
+  dimension:0,
+  function:0
+ };
 
  rows.forEach(r=>{
 
   const tr=document.createElement("tr");
 
-  /* CATEGORY HEADER */
+  /* CATEGORY */
   if(r.type==="category"){
 
    const td=document.createElement("td");
@@ -54,19 +58,18 @@ function buildMeasurementTableFromExcel(rows){
 
    tr.appendChild(td);
    measureBody.appendChild(tr);
-
-   numbering=1;
    return;
   }
 
+  counters[r.type]++;
+  const number=counters[r.type];
+
   tr.innerHTML=`
-   <td>${numbering}</td>
+   <td>${number}</td>
    <td>${r.item}</td>
    <td class="std-col">${r.std||""}</td>
    <td>${r.minus||""}</td>
    <td>${r.plus||""}</td>`;
-
-  numbering++;
 
   dynamicMeasurements.push(r);
 
@@ -78,6 +81,7 @@ function buildMeasurementTableFromExcel(rows){
    const box=document.createElement("div");
 
    if(r.type==="dimension"){
+
     for(let i=0;i<3;i++){
      const inp=document.createElement("input");
      inp.type="number";
@@ -85,11 +89,22 @@ function buildMeasurementTableFromExcel(rows){
      inp.addEventListener("input",()=>evaluateCell(td,r));
      box.appendChild(inp);
     }
+
    }else{
+
     for(let i=0;i<3;i++){
      const sel=document.createElement("select");
      sel.disabled=true;
-     sel.innerHTML=`<option>OK</option><option>NG</option>`;
+
+     const ok=document.createElement("option");
+     ok.value="OK"; ok.text="OK";
+
+     const ng=document.createElement("option");
+     ng.value="NG"; ng.text="NG";
+
+     sel.appendChild(ok);
+     sel.appendChild(ng);
+
      sel.addEventListener("change",()=>evaluateCell(td,r));
      box.appendChild(sel);
     }
@@ -102,12 +117,6 @@ function buildMeasurementTableFromExcel(rows){
   measureBody.appendChild(tr);
 
  });
-
- addBottomRow("Vendor Production Date","vendor_date");
- addBottomRow("Inspection Date","inspection_date");
- addBottomRow("PIC Stamp","pic");
- addBottomRow("Checker Stamp","checker");
- addBottomRow("Approver Stamp","approver");
 
 }
 
@@ -122,9 +131,13 @@ function evaluateCell(td,m){
  let red=false;
 
  if(m.type==="dimension"){
-  const std=parseFloat(m.std)||0;
-  const min=std-(parseFloat(m.minus)||0);
-  const max=std+(parseFloat(m.plus)||0);
+
+  const std=parseFloat(m.std);
+  const minus=parseFloat(m.minus);
+  const plus=parseFloat(m.plus);
+
+  const min=std-minus;
+  const max=std+plus;
 
   inputs.forEach(i=>{
    const v=parseFloat(i.value);
@@ -142,31 +155,6 @@ function evaluateCell(td,m){
 
 
 /* ================================
-   BLOCK 05 — BOTTOM STRUCTURE
-================================ */
-
-function addBottomRow(label,role){
-
- const tr=document.createElement("tr");
- tr.dataset.role=role;
-
- const first=document.createElement("td");
- first.colSpan=5;
- first.textContent=label;
- first.style.fontWeight="bold";
-
- tr.appendChild(first);
-
- for(let d=1;d<=31;d++){
-  const td=document.createElement("td");
-  td.dataset.day=d;
-  tr.appendChild(td);
- }
-
- measureBody.appendChild(tr);
-}
-
-/* ================================
    BLOCK 10 — DAY VISIBILITY
 ================================ */
 
@@ -180,6 +168,7 @@ function updateVisibleDays(){
  });
 
 }
+
 
 /* ================================
    BLOCK 11 — DATE SELECTION
@@ -204,11 +193,12 @@ inspectionDate.addEventListener("change",()=>{
   }
 
  });
+
 });
 
 
 /* =====================================================
-   BLOCK 15 — EXCEL IMPORT ENGINE (FINAL COMPANY VERSION)
+   BLOCK 15 — EXCEL IMPORT ENGINE (FINAL STABLE)
 ===================================================== */
 
 async function loadExcel(){
@@ -217,7 +207,6 @@ async function loadExcel(){
  if(!file) return alert("Select Excel file");
 
  const data=await file.arrayBuffer();
-
  const workbook=XLSX.read(data);
  const sheet=workbook.Sheets[workbook.SheetNames[0]];
  const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
@@ -225,28 +214,38 @@ async function loadExcel(){
  applyExcelHeader(rows);
 
  const measurements=[];
- let currentType="appearance";
 
  for(let i=11;i<rows.length;i++){
 
   const row=rows[i];
-if(!row) continue;
+  if(!row) continue;
 
-const name = (row[0] || row[1] || "").toString().trim();
-if(!name) continue;
+  const category=(row[0]||"").toString().trim().toLowerCase();
+  const item=(row[1]||"").toString().trim();
 
+  if(!category && !item) continue;
+  if(category.includes("vendor")) break;
 
-  if(name==="Appearance"||name==="Dimension"||name==="Function"){
-   measurements.push({type:"category",item:name});
-   currentType=name.toLowerCase();
+  /* CATEGORY HEADER */
+  if(
+   category==="appearance" ||
+   category==="dimension" ||
+   category==="function"
+  ){
+   measurements.push({
+    type:"category",
+    item:row[0]
+   });
    continue;
   }
 
-  if(name.toLowerCase().includes("vendor production")) break;
+  let type="appearance";
+  if(category.includes("dimension")) type="dimension";
+  if(category.includes("function")) type="function";
 
   measurements.push({
-   type:currentType,
-   item:name,
+   type:type,
+   item:item,
    std:row[2]||"",
    minus:row[3]||"",
    plus:row[4]||""
@@ -260,16 +259,30 @@ if(!name) continue;
 
 
 /* =====================================================
-   BLOCK 17 — EXCEL STATIC HEADER APPLY (REAL TABLE)
+   BLOCK 17 — STATIC HEADER SMART SCAN
 ===================================================== */
 
 function applyExcelHeader(rows){
 
  try{
 
-  document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText = rows[8][1] || "";
-  document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText = rows[7][1] || "";
-  document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText = rows[6][1] || "";
+  rows.forEach(r=>{
+
+   const label=(r[0]||"").toString().toLowerCase();
+
+   if(label.includes("vendor")){
+    document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText=r[2]||"";
+   }
+
+   if(label.includes("type")){
+    document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText=r[2]||"";
+   }
+
+   if(label.includes("part name")){
+    document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText=r[2]||"";
+   }
+
+  });
 
  }catch(e){
   console.log("Header apply failed",e);
@@ -277,3 +290,9 @@ function applyExcelHeader(rows){
 
 }
 
+
+/* ================================
+   BLOCK INIT
+================================ */
+
+updateVisibleDays();
