@@ -329,7 +329,6 @@ inspectionDate.addEventListener("change",()=>{
 });
 
 
-
 /* =====================================================
    BLOCK 13 — SAVE ENGINE
 ===================================================== */
@@ -371,12 +370,13 @@ async function saveReceiving(){
  const result=await res.json();
 
  daysWithData=result.days;
-   lockedDays=[...daysWithData];
+ lockedDays=[...daysWithData];
 
  updateVisibleDays();
 
  alert("Receiving Saved");
 }
+
 
 
 /* =====================================================
