@@ -37,76 +37,78 @@ function buildMeasurementTableFromExcel(rows){
  measureBody.innerHTML="";
  dynamicMeasurements=[];
 
- let runningNo=1;
- let measureIndex=0;
+ let numbering=1;
 
- rows.forEach((r)=>{
+ rows.forEach(r=>{
 
- const tr=document.createElement("tr");
+  const tr=document.createElement("tr");
 
- if(r.type==="category"){
+  /* CATEGORY HEADER */
+  if(r.type==="category"){
 
-  const td=document.createElement("td");
-  td.colSpan=36;
-  td.innerText=r.item;
-  td.style.background="#ccffcc";
-  td.style.fontWeight="bold";
+   const td=document.createElement("td");
+   td.colSpan=36;
+   td.innerText=r.item;
+   td.style.background="#ccffcc";
+   td.style.fontWeight="bold";
 
-  tr.appendChild(td);
-  measureBody.appendChild(tr);
-  return;
- }
+   tr.appendChild(td);
+   measureBody.appendChild(tr);
 
- tr.dataset.measureIndex=measureIndex;
-
- tr.innerHTML=`
- <td>${runningNo++}</td>
- <td>${r.item}</td>
- <td class="std-col">${r.std||""}</td>
- <td>${r.minus||""}</td>
- <td>${r.plus||""}</td>`;
-
- dynamicMeasurements.push(r);
-
- for(let d=1;d<=31;d++){
-
-  const td=document.createElement("td");
-  td.dataset.day=d;
-
-  const box=document.createElement("div");
-
-  if(r.type==="dimension"){
-   for(let i=0;i<3;i++){
-    const inp=document.createElement("input");
-    inp.type="number";
-    inp.disabled=true;
-    inp.addEventListener("input",()=>evaluateCell(td,r));
-    box.appendChild(inp);
-   }
-  }else{
-   for(let i=0;i<3;i++){
-    const sel=document.createElement("select");
-    sel.disabled=true;
-
-    ["OK","NG"].forEach(v=>{
-     const opt=document.createElement("option");
-     opt.value=v; opt.text=v;
-     sel.appendChild(opt);
-    });
-
-    sel.addEventListener("change",()=>evaluateCell(td,r));
-    box.appendChild(sel);
-   }
+   numbering=1;
+   return;
   }
 
-  td.appendChild(box);
-  tr.appendChild(td);
- }
+  tr.innerHTML=`
+   <td>${numbering}</td>
+   <td>${r.item}</td>
+   <td class="std-col">${r.std||""}</td>
+   <td>${r.minus||""}</td>
+   <td>${r.plus||""}</td>`;
 
- measureBody.appendChild(tr);
- measureIndex++;
+  numbering++;
+
+  dynamicMeasurements.push(r);
+
+  for(let d=1;d<=31;d++){
+
+   const td=document.createElement("td");
+   td.dataset.day=d;
+
+   const box=document.createElement("div");
+
+   if(r.type==="dimension"){
+    for(let i=0;i<3;i++){
+     const inp=document.createElement("input");
+     inp.type="number";
+     inp.disabled=true;
+     inp.addEventListener("input",()=>evaluateCell(td,r));
+     box.appendChild(inp);
+    }
+   }else{
+    for(let i=0;i<3;i++){
+     const sel=document.createElement("select");
+     sel.disabled=true;
+     sel.innerHTML=`<option>OK</option><option>NG</option>`;
+     sel.addEventListener("change",()=>evaluateCell(td,r));
+     box.appendChild(sel);
+    }
+   }
+
+   td.appendChild(box);
+   tr.appendChild(td);
+  }
+
+  measureBody.appendChild(tr);
 
  });
+
+ addBottomRow("Vendor Production Date","vendor_date");
+ addBottomRow("Inspection Date","inspection_date");
+ addBottomRow("PIC Stamp","pic");
+ addBottomRow("Checker Stamp","checker");
+ addBottomRow("Approver Stamp","approver");
+
 }
 
 
@@ -120,8 +122,9 @@ function evaluateCell(td,m){
  let red=false;
 
  if(m.type==="dimension"){
-  const min=m.std-m.minus;
-  const max=m.std+m.plus;
+  const std=parseFloat(m.std)||0;
+  const min=std-(parseFloat(m.minus)||0);
+  const max=std+(parseFloat(m.plus)||0);
 
   inputs.forEach(i=>{
    const v=parseFloat(i.value);
@@ -139,41 +142,59 @@ function evaluateCell(td,m){
 
 
 /* ================================
-   BLOCK 08 — HISTORY REBUILD
+   BLOCK 05 — BOTTOM STRUCTURE
 ================================ */
 
-function rebuildHistory(){
+function addBottomRow(label,role){
 
- Object.keys(measurementsHistory).forEach(day=>{
+ const tr=document.createElement("tr");
+ tr.dataset.role=role;
 
-  document.querySelectorAll("#measureBody tr").forEach(tr=>{
+ const first=document.createElement("td");
+ first.colSpan=5;
+ first.textContent=label;
+ first.style.fontWeight="bold";
 
-   if(!tr.dataset.measureIndex) return;
+ tr.appendChild(first);
 
-   const idx=parseInt(tr.dataset.measureIndex);
+ for(let d=1;d<=31;d++){
+  const td=document.createElement("td");
+  td.dataset.day=d;
+  tr.appendChild(td);
+ }
 
-   const td=tr.querySelector(`td[data-day="${day}"]`);
-   if(!td) return;
-
-   const inputs=td.querySelectorAll("input,select");
-   const values=measurementsHistory[day][idx]||[];
-
-   inputs.forEach((inp,i)=>{
-    if(values[i]!==undefined){
-     inp.value=values[i];
-     inp.disabled=true;
-    }
-   });
-
-   const m=dynamicMeasurements[idx];
-   evaluateCell(td,m);
-  });
- });
+ measureBody.appendChild(tr);
 }
 
 
+/* ================================
+   BLOCK 11 — DATE SELECTION
+================================ */
+
+inspectionDate.addEventListener("change",()=>{
+
+ const date=new Date(inspectionDate.value);
+ activeDay=date.getDate();
+
+ updateVisibleDays();
+
+ document.querySelectorAll("td[data-day]").forEach(td=>{
+
+  const day=parseInt(td.dataset.day);
+  const inputs=td.querySelectorAll("input,select");
+
+  if(day===activeDay && !lockedDays.includes(day)){
+   inputs.forEach(i=>i.disabled=false);
+  }else{
+   inputs.forEach(i=>i.disabled=true);
+  }
+
+ });
+});
+
+
 /* =====================================================
-   BLOCK 15 — EXCEL IMPORT ENGINE (ROBUST VERSION)
+   BLOCK 15 — EXCEL IMPORT ENGINE (FINAL COMPANY VERSION)
 ===================================================== */
 
 async function loadExcel(){
@@ -190,31 +211,26 @@ async function loadExcel(){
  applyExcelHeader(rows);
 
  const measurements=[];
+ let currentType="appearance";
 
- for(let i=0;i<rows.length;i++){
+ for(let i=11;i<rows.length;i++){
 
   const row=rows[i];
-  if(!row) continue;
+  if(!row || !row[1]) continue;
 
-  const item=row.find(c=>typeof c==="string");
-  if(!item) continue;
+  const name=row[1].toString().trim();
 
-  const name=item.toLowerCase();
-
-  if(name.includes("vendor")) break;
-  if(name.includes("stamp")) break;
-
-  let type="appearance";
-
-  if(name==="appearance"||name==="dimension"||name==="function"){
-   type="category";
+  if(name==="Appearance"||name==="Dimension"||name==="Function"){
+   measurements.push({type:"category",item:name});
+   currentType=name.toLowerCase();
+   continue;
   }
-  else if(name.includes("dimension")) type="dimension";
-  else if(name.includes("function")) type="function";
+
+  if(name.toLowerCase().includes("vendor production")) break;
 
   measurements.push({
-   type:type,
-   item:item,
+   type:currentType,
+   item:name,
    std:row[2]||"",
    minus:row[3]||"",
    plus:row[4]||""
@@ -223,28 +239,24 @@ async function loadExcel(){
  }
 
  buildMeasurementTableFromExcel(measurements);
+
 }
 
 
 /* =====================================================
-   BLOCK 17 — EXCEL STATIC HEADER APPLY (SMART SCAN)
+   BLOCK 17 — EXCEL STATIC HEADER APPLY
 ===================================================== */
 
 function applyExcelHeader(rows){
 
- let part="",vendor="",type="";
+ try{
 
- rows.forEach(r=>{
-  if(!r) return;
-  const line=r.join(" ").toLowerCase();
+  document.querySelector("#partName").innerText = rows[8][1] || "";
+  document.querySelector("#type").innerText = rows[7][1] || "";
+  document.querySelector("#vendor").innerText = rows[6][1] || "";
 
-  if(line.includes("part")&& !part) part=r[r.length-1];
-  if(line.includes("vendor")&& !vendor) vendor=r[r.length-1];
-  if(line.includes("type")&& !type) type=r[r.length-1];
- });
-
- document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText=part;
- document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText=vendor;
- document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText=type;
+ }catch(e){
+  console.log("Header apply failed",e);
+ }
 
 }
