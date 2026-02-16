@@ -108,6 +108,26 @@ function buildMeasurementTableFromExcel(rows){
 
 }
 
+function buildTableHeader(){
+
+ const thead=document.querySelector("#measureTable thead");
+ thead.innerHTML="";
+
+ const tr=document.createElement("tr");
+
+ tr.innerHTML=`
+  <th>No</th>
+  <th>Item</th>
+  <th>Std</th>
+  <th>-</th>
+  <th>+</th>
+  <th>${activeDay||""}</th>
+ `;
+
+ thead.appendChild(tr);
+}
+
+
 
 /* ================================
    CELL EVALUATION
@@ -227,24 +247,27 @@ async function loadReceivingForSelectedDay(){
   const res=await fetch(`${API_URL}/receiving/history/${partId}`);
   const data=await res.json();
 
-  const existing=data.measurements[activeDay];
-
-  if(!existing){
+  if(!Array.isArray(data)) {
    setInputsDisabled(false);
    return;
   }
 
-  fillMeasurements(existing);
-  setInputsDisabled(true);
+  const record=data.find(r=>r.day===activeDay);
 
-  if(!lockedDays.includes(activeDay))
-   lockedDays.push(activeDay);
+  if(!record){
+   setInputsDisabled(false);
+   return;
+  }
+
+  fillMeasurements(record.measurements);
+  setInputsDisabled(true);
 
  }catch(e){
   console.log("Load error",e);
  }
 
 }
+
 
 
 /* ================================
@@ -289,12 +312,13 @@ inspectionDate.addEventListener("change", async ()=>{
   return;
  }
 
- buildDayHeader();
+ buildTableHeader();
  buildMeasurementTableFromExcel(dynamicMeasurements);
 
  await loadReceivingForSelectedDay();
 
 });
+
 
 
 /* ================================
