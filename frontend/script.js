@@ -339,35 +339,55 @@ async function loadExcel(){
 
  dynamicMeasurements=[];
 
+ let currentSection=null;
+
  for(let i=11;i<rows.length;i++){
 
   const row=rows[i];
-  if(!row || !row[1]) continue;
+  if(!row) continue;
 
-  const name=row[1].toString().toLowerCase();
+  /* SECTION HEADER DETECT FROM COLUMN A */
+  if(row[0]){
 
-  if(name==="appearance"||name==="dimension"||name==="function"){
-   dynamicMeasurements.push({type:"category",item:row[1]});
-   continue;
+   const section=row[0].toString().trim().toLowerCase();
+
+   if(section.includes("appearance") ||
+      section.includes("dimens") ||
+      section.includes("function")){
+
+      currentSection=section.includes("dimens") ? "dimension"
+                     : section.includes("function") ? "function"
+                     : "appearance";
+
+      dynamicMeasurements.push({
+        type:"category",
+        item: row[0]
+      });
+
+      continue;
+   }
   }
 
-  let type="appearance";
-  if(name.includes("dimension")) type="dimension";
-  if(name.includes("function")) type="function";
+  /* SKIP EMPTY */
+  if(!row[2]) continue;
+
+  if(!currentSection) continue;
 
   dynamicMeasurements.push({
-   type:type,
-   item:row[1],
-   std:row[2]||"",
-   minus:row[3]||"",
-   plus:row[4]||""
+   type: currentSection,
+   item: row[2],     // Column C = Item
+   std: row[3]||"",  // Column D
+   minus: row[5]||"",// Column F (TOL -)
+   plus: row[4]||""  // Column E (TOL +)
   });
 
  }
 
  alert("Excel Loaded. Select Date.");
+localStorage.setItem("active_part_id", "8123-0987");
 
 }
+
 
 
 /* ================================
@@ -380,17 +400,18 @@ function applyExcelHeader(rows){
 
   if(!r[0]) return;
 
-  const key=r[0].toString().toLowerCase();
+  const key=r[0].toString().trim().toLowerCase();
 
-  if(key.includes("part name"))
+  if(key==="part name")
    document.querySelector(".static-header tr:nth-child(1) td:nth-child(2)").innerText=r[2]||"";
 
-  if(key.includes("type"))
+  if(key==="type")
    document.querySelector(".static-header tr:nth-child(2) td:nth-child(2)").innerText=r[2]||"";
 
-  if(key.includes("vendor"))
+  if(key==="vendor")
    document.querySelector(".static-header tr:nth-child(3) td:nth-child(2)").innerText=r[2]||"";
 
  });
 
 }
+
