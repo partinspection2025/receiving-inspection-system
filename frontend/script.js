@@ -67,13 +67,16 @@ function buildMeasurementTableFromExcel(rows){
   counters[r.type]++;
   const number=counters[r.type];
 
-  tr.innerHTML=`
-   <td>${number}</td>
-   <td>${r.item}</td>
-   <td>${r.std||""}</td>
-   <td>${r.minus||""}</td>
-   <td>${r.plus||""}</td>
-  `;
+tr.innerHTML=`
+ <th>No</th>
+ <th>Item</th>
+ <th>Std</th>
+ <th>Tools</th>
+ <th>+</th>
+ <th>-</th>
+ <th>${activeDay}</th>
+`;
+
 
   const td=document.createElement("td");
   td.dataset.day=activeDay;
@@ -260,6 +263,9 @@ async function loadReceivingForSelectedDay(){
   }
 
   fillMeasurements(record.measurements);
+    document.getElementById("productionDate").value = record.production_date || "";
+document.getElementById("receivingDate").value = record.receiving_date || "";
+
   setInputsDisabled(true);
 
  }catch(e){
@@ -278,11 +284,14 @@ async function saveReceiving(){
 
  if(!activeDay) return alert("Select inspection date");
 
- const payload={
+const payload={
   part_id: localStorage.getItem("active_part_id"),
   day: activeDay,
+  production_date: document.getElementById("productionDate").value,
+  receiving_date: document.getElementById("receivingDate").value,
   measurements: collectMeasurements()
- };
+};
+
 
  await fetch(`${API_URL}/receiving/save`,{
   method:"POST",
