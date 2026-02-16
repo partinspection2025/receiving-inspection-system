@@ -244,7 +244,8 @@ async function loadReceivingForSelectedDay(){
 
  try{
 
-  const partId=localStorage.getItem("active_part_id");
+  const partId=localStorage.setItem("active_part_id", part.id);
+
   if(!partId) return;
 
   const res=await fetch(`${API_URL}/receiving/history/${partId}`);
