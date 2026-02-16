@@ -1,39 +1,43 @@
 /* =====================================================
-   RECEIVING INSPECTION SYSTEM — SINGLE DAY MODE
-   FINAL STABLE VERSION
+   RECEIVING INSPECTION SYSTEM — CLEAN STABLE VERSION
 ===================================================== */
 
 const API_URL="https://receiving-inspection-system-production.up.railway.app";
 
-const dayHeader=document.getElementById("dayHeader");
 const measureBody=document.getElementById("measureBody");
 const inspectionDate=document.getElementById("inspectionDate");
 
 let activeDay=null;
 let dynamicMeasurements=[];
-let lockedDays=[];
 
 
 /* ================================
-   BUILD SINGLE DAY HEADER
+   BUILD TABLE HEADER
 ================================ */
 
-function buildDayHeader(){
+function buildTableHeader(){
 
- dayHeader.innerHTML="";
+ const thead=document.querySelector("#measureTable thead");
+ thead.innerHTML="";
 
- if(!activeDay) return;
+ const tr=document.createElement("tr");
 
- const th=document.createElement("th");
- th.textContent=activeDay;
- th.dataset.day=activeDay;
+ tr.innerHTML=`
+   <th>No</th>
+   <th>Item</th>
+   <th>Std</th>
+   <th>Tools</th>
+   <th>-</th>
+   <th>+</th>
+   <th>${activeDay || ""}</th>
+ `;
 
- dayHeader.appendChild(th);
+ thead.appendChild(tr);
 }
 
 
 /* ================================
-   BUILD TABLE
+   BUILD TABLE BODY
 ================================ */
 
 function buildMeasurementTableFromExcel(rows){
@@ -54,7 +58,7 @@ function buildMeasurementTableFromExcel(rows){
   if(r.type==="category"){
 
    const td=document.createElement("td");
-   td.colSpan=6;
+   td.colSpan=7;
    td.innerText=r.item;
    td.style.background="#ccffcc";
    td.style.fontWeight="bold";
@@ -67,16 +71,14 @@ function buildMeasurementTableFromExcel(rows){
   counters[r.type]++;
   const number=counters[r.type];
 
-tr.innerHTML=`
- <th>No</th>
- <th>Item</th>
- <th>Std</th>
- <th>Tools</th>
- <th>+</th>
- <th>-</th>
- <th>${activeDay}</th>
-`;
-
+  tr.innerHTML=`
+    <td>${number}</td>
+    <td>${r.item}</td>
+    <td>${r.std || ""}</td>
+    <td>${r.tool || ""}</td>
+    <td>${r.minus || ""}</td>
+    <td>${r.plus || ""}</td>
+  `;
 
   const td=document.createElement("td");
   td.dataset.day=activeDay;
@@ -84,20 +86,15 @@ tr.innerHTML=`
   const box=document.createElement("div");
 
   if(r.type==="dimension"){
-
    for(let i=0;i<3;i++){
     const inp=document.createElement("input");
     inp.type="number";
-    inp.addEventListener("input",()=>evaluateCell(td,r));
     box.appendChild(inp);
    }
-
   }else{
-
    for(let i=0;i<3;i++){
     const sel=document.createElement("select");
     sel.innerHTML=`<option>OK</option><option>NG</option>`;
-    sel.addEventListener("change",()=>evaluateCell(td,r));
     box.appendChild(sel);
    }
   }
@@ -111,76 +108,19 @@ tr.innerHTML=`
 
 }
 
-function buildTableHeader(){
-
- const thead=document.querySelector("#measureTable thead");
- thead.innerHTML="";
-
- const tr=document.createElement("tr");
-
- tr.innerHTML=`
-  <th>No</th>
-  <th>Item</th>
-  <th>Std</th>
-  <th>-</th>
-  <th>+</th>
-  <th>${activeDay||""}</th>
- `;
-
- thead.appendChild(tr);
-}
-
-
-
-/* ================================
-   CELL EVALUATION
-================================ */
-
-function evaluateCell(td,m){
-
- const inputs=td.querySelectorAll("input,select");
- let red=false;
-
- if(m.type==="dimension"){
-
-  const std=parseFloat(m.std);
-  const minus=parseFloat(m.minus||0);
-  const plus=parseFloat(m.plus||0);
-
-  const min=std-minus;
-  const max=std+plus;
-
-  inputs.forEach(i=>{
-   const v=parseFloat(i.value);
-   if(!isNaN(v)&&(v<min||v>max)) red=true;
-  });
-
- }else{
-
-  inputs.forEach(i=>{
-   if(i.value==="NG") red=true;
-  });
-
- }
-
- td.style.backgroundColor=red?"#ffb3b3":"";
-}
-
 
 /* ================================
    ENABLE / DISABLE
 ================================ */
 
 function setInputsDisabled(state){
-
  document.querySelectorAll("td[data-day] input, td[data-day] select")
    .forEach(i=>i.disabled=state);
-
 }
 
 
 /* ================================
-   COLLECT MEASUREMENTS
+   COLLECT DATA
 ================================ */
 
 function collectMeasurements(){
@@ -211,7 +151,6 @@ function collectMeasurements(){
 function fillMeasurements(saved){
 
  const rows=document.querySelectorAll("#measureBody tr");
-
  let index=0;
 
  rows.forEach(tr=>{
@@ -237,21 +176,20 @@ function fillMeasurements(saved){
 
 
 /* ================================
-   LOAD EXISTING RECEIVING
+   LOAD HISTORY
 ================================ */
 
 async function loadReceivingForSelectedDay(){
 
  try{
 
-  const partId=localStorage.setItem("active_part_id", part.id);
-
+  const partId=localStorage.getItem("active_part_id");
   if(!partId) return;
 
   const res=await fetch(`${API_URL}/receiving/history/${partId}`);
   const data=await res.json();
 
-  if(!Array.isArray(data)) {
+  if(!Array.isArray(data)){
    setInputsDisabled(false);
    return;
   }
@@ -264,35 +202,34 @@ async function loadReceivingForSelectedDay(){
   }
 
   fillMeasurements(record.measurements);
-    document.getElementById("productionDate").value = record.production_date || "";
-document.getElementById("receivingDate").value = record.receiving_date || "";
+
+  document.getElementById("productionDate").value = record.production_date || "";
+  document.getElementById("receivingDate").value = record.receiving_date || "";
 
   setInputsDisabled(true);
 
  }catch(e){
-  console.log("Load error",e);
+  console.log("History load error:",e);
  }
 
 }
 
 
-
 /* ================================
-   SAVE RECEIVING
+   SAVE
 ================================ */
 
 async function saveReceiving(){
 
  if(!activeDay) return alert("Select inspection date");
 
-const payload={
+ const payload={
   part_id: localStorage.getItem("active_part_id"),
   day: activeDay,
   production_date: document.getElementById("productionDate").value,
   receiving_date: document.getElementById("receivingDate").value,
   measurements: collectMeasurements()
-};
-
+ };
 
  await fetch(`${API_URL}/receiving/save`,{
   method:"POST",
@@ -301,15 +238,13 @@ const payload={
  });
 
  setInputsDisabled(true);
- lockedDays.push(activeDay);
-
  alert("Saved & Locked");
 
 }
 
 
 /* ================================
-   DATE SELECTION
+   DATE CHANGE
 ================================ */
 
 inspectionDate.addEventListener("change", async ()=>{
@@ -330,9 +265,8 @@ inspectionDate.addEventListener("change", async ()=>{
 });
 
 
-
 /* ================================
-   EXCEL IMPORT
+   EXCEL LOAD
 ================================ */
 
 async function loadExcel(){
@@ -348,7 +282,6 @@ async function loadExcel(){
  applyExcelHeader(rows);
 
  dynamicMeasurements=[];
-
  let currentSection=null;
 
  for(let i=11;i<rows.length;i++){
@@ -356,10 +289,8 @@ async function loadExcel(){
   const row=rows[i];
   if(!row) continue;
 
-  /* SECTION HEADER DETECT FROM COLUMN A */
   if(row[0]){
-
-   const section=row[0].toString().trim().toLowerCase();
+   const section=row[0].toString().toLowerCase();
 
    if(section.includes("appearance") ||
       section.includes("dimens") ||
@@ -378,30 +309,29 @@ async function loadExcel(){
    }
   }
 
-  /* SKIP EMPTY */
-  if(!row[2]) continue;
-
-  if(!currentSection) continue;
+  if(!row[2] || !currentSection) continue;
 
   dynamicMeasurements.push({
    type: currentSection,
-   item: row[2],     // Column C = Item
-   std: row[3]||"",  // Column D
-   minus: row[5]||"",// Column F (TOL -)
-   plus: row[4]||""  // Column E (TOL +)
+   item: row[2],
+   std: row[3]||"",
+   plus: row[4]||"",
+   minus: row[5]||"",
+   tool: row[6]||""
   });
 
  }
 
+ // ⚠️ TEMP until backend part list connected
+ localStorage.setItem("active_part_id","1");
+
  alert("Excel Loaded. Select Date.");
-localStorage.setItem("active_part_id", "8123-0987");
 
 }
 
 
-
 /* ================================
-   HEADER APPLY (FIXED COLUMN C)
+   HEADER APPLY
 ================================ */
 
 function applyExcelHeader(rows){
@@ -425,3 +355,13 @@ function applyExcelHeader(rows){
 
 }
 
+
+/* ================================
+   STAMP
+================================ */
+
+function applyStamp(type){
+ const name=prompt("Enter name:");
+ if(!name) return;
+ document.getElementById("stamp"+type).innerText=name;
+}
