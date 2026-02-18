@@ -360,8 +360,30 @@ function applyExcelHeader(rows){
    STAMP
 ================================ */
 
-function applyStamp(type){
- const name=prompt("Enter name:");
- if(!name) return;
- document.getElementById("stamp"+type).innerText=name;
+function applyStamp(role){
+
+  const loggedName = localStorage.getItem("user_name");
+  const loggedRole = localStorage.getItem("user_role");
+
+  if(!loggedName || !loggedRole){
+    alert("User not logged in.");
+    return;
+  }
+
+  if(loggedRole.toUpperCase() !== role.toUpperCase()){
+    alert("You are not authorized to stamp as " + role);
+    return;
+  }
+
+  const today = new Date().toLocaleDateString();
+
+  const cell = document.getElementById("stamp" + role.toUpperCase());
+
+  cell.innerHTML = `
+    <div class="stamp-circle">
+      <div>${role.toUpperCase()}</div>
+      <div>${loggedName}</div>
+      <div>${today}</div>
+    </div>
+  `;
 }
