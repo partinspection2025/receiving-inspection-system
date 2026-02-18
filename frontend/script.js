@@ -387,3 +387,4 @@ function applyStamp(role){
     </div>
   `;
 }
+
